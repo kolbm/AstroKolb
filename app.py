@@ -98,7 +98,6 @@ if st.button("Fetch Data"):
     for key, (value, unit) in planetary_data.items():
         st.latex(format_value(key, value, unit))
 
-    # Display celestial image
+    # Display celestial image with updated parameter
     if selected_body in celestial_images:
-        st.image(celestial_images[selected_body], caption=f"Image of {selected_body}", use_column_width=True)
-
+        st.image(celestial_images[selected_body], caption=f"Image of {selected_body}", use_container_width=True)
