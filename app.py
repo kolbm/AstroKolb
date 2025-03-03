@@ -59,7 +59,7 @@ def get_planetary_data(body_name):
         "Mean Radius (m)": data.get("meanRadius", None) * 1000 if data.get("meanRadius") else None,
         "Mean Solar Day (s)": data.get("sideralRotation", None) * 86400 if data.get("sideralRotation") else None,
         "Distance from Sun (m)": data.get("semimajorAxis", None) * 1000 if data.get("semimajorAxis") else None,
-        "Image": f"https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/{body_name.capitalize()}_by_Cassini.jpg/400px-{body_name.capitalize()}_by_Cassini.jpg"
+        "Image": f"https://solarsystem.nasa.gov/system/feature_items/images/{body_name.lower()}_1.jpg"
     }
 
     return extracted_data
@@ -68,12 +68,13 @@ def get_planetary_data(body_name):
 def get_exoplanet_data():
     """Fetch exoplanet data from NASA Exoplanet Archive API."""
     params = {
-        "query": "SELECT pl_name, hostname, pl_orbper, pl_orbsmax, pl_rade, pl_bmassj, pl_constellation FROM pscomppars",
+        "query": "SELECT pl_name, pl_constellation, pl_orbper, pl_orbsmax, pl_rade, pl_bmassj FROM pscomppars",
         "format": "json"
     }
 
     response = requests.get(exoplanet_api, params=params)
-    if response.status_code != 200:
+    
+    if response.status_code != 200 or not response.json():
         return None
 
     return response.json()
@@ -126,32 +127,33 @@ if mode == "Solar System Objects":
 elif mode == "Exoplanets":
     exoplanets = get_exoplanet_data()
 
-    if exoplanets:
+    if exoplanets and isinstance(exoplanets, list) and len(exoplanets) > 0:
         exoplanet_names = [planet["pl_name"] for planet in exoplanets]
-        
-        if exoplanet_names:  # Ensure there are exoplanets available
-            selected_exoplanet = st.selectbox("Select an Exoplanet", exoplanet_names)
+        selected_exoplanet = st.selectbox("Select an Exoplanet", exoplanet_names)
 
-            if st.button("Fetch Exoplanet Data"):
-                planet_data = next((p for p in exoplanets if p["pl_name"] == selected_exoplanet), None)
+        if st.button("Fetch Exoplanet Data"):
+            planet_data = next((p for p in exoplanets if p["pl_name"] == selected_exoplanet), None)
 
-                if planet_data:
-                    extracted_data = {
-                        "Mass (kg)": float(planet_data.get("pl_bmassj", 1.0)) * 1.898e27,  # Convert Jupiter masses to kg
-                        "Semi-Major Axis (m)": float(planet_data.get("pl_orbsmax", 1.0)) * AU_TO_METERS,  # Convert AU to meters
-                        "Orbital Period (s)": float(planet_data.get("pl_orbper", 1.0)) * 86400,  # Convert days to seconds
-                        "Constellation": planet_data.get("pl_constellation", "Unknown"),  # Constellation the exoplanet is in
-                    }
+            if planet_data:
+                extracted_data = {
+                    "Mass (kg)": float(planet_data.get("pl_bmassj", 1.0)) * 1.898e27,  # Convert Jupiter masses to kg
+                    "Semi-Major Axis (m)": float(planet_data.get("pl_orbsmax", 1.0)) * AU_TO_METERS,  # Convert AU to meters
+                    "Orbital Period (s)": float(planet_data.get("pl_orbper", 1.0)) * 86400,  # Convert days to seconds
+                    "Constellation": planet_data.get("pl_constellation", "Unknown"),  # Constellation the exoplanet is in
+                }
 
-                    st.subheader("Extracted Data:")
-                    formatted_latex = [
-                        format_value(r"\text{Mass}", extracted_data.get("Mass (kg)"), "kg"),
-                        format_value(r"\text{Semi-Major Axis}", extracted_data.get("Semi-Major Axis (m)"), "m"),
-                        format_value(r"\text{Orbital Period}", extracted_data.get("Orbital Period (s)"), "s"),
-                    ]
+                st.subheader("Extracted Data:")
+                formatted_latex = [
+                    format_value(r"\text{Mass}", extracted_data.get("Mass (kg)"), "kg"),
+                    format_value(r"\text{Semi-Major Axis}", extracted_data.get("Semi-Major Axis (m)"), "m"),
+                    format_value(r"\text{Orbital Period}", extracted_data.get("Orbital Period (s)"), "s"),
+                ]
 
-                    for latex_string in formatted_latex:
-                        st.latex(latex_string)
+                for latex_string in formatted_latex:
+                    st.latex(latex_string)
 
-                    # Display the constellation instead of a symbol
-                    st.markdown(f"### **Constellation: {extracted_data['Constellation']}**")
+                # Display the constellation instead of a symbol
+                st.markdown(f"### **Constellation: {extracted_data['Constellation']}**")
+    else:
+        st.warning("No exoplanet data available. Check API connectivity.")
+
