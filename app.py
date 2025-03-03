@@ -8,7 +8,6 @@ AU_TO_METERS = 1.496e+11  # Convert AU to meters
 
 # API endpoints
 solar_system_api = "https://api.le-systeme-solaire.net/rest/bodies/"
-exoplanet_api = "https://exoplanetarchive.ipac.caltech.edu/TAP/sync"
 
 # Dictionary of known celestial bodies with their API identifiers
 horizons_bodies = {
@@ -42,6 +41,22 @@ celestial_symbols = {
     "Titan": "🜂"
 }
 
+# NASA JPL Image Links for Solar System Objects
+nasa_images = {
+    "Mercury": "https://solarsystem.nasa.gov/system/feature_items/images/18_mercury_new.png",
+    "Venus": "https://solarsystem.nasa.gov/system/feature_items/images/27_venus_jg.png",
+    "Earth": "https://solarsystem.nasa.gov/system/feature_items/images/17_earth.png",
+    "Mars": "https://solarsystem.nasa.gov/system/feature_items/images/19_mars.png",
+    "Jupiter": "https://solarsystem.nasa.gov/system/feature_items/images/16_jupiter_new.png",
+    "Saturn": "https://solarsystem.nasa.gov/system/feature_items/images/28_saturn.png",
+    "Uranus": "https://solarsystem.nasa.gov/system/feature_items/images/29_uranus.png",
+    "Neptune": "https://solarsystem.nasa.gov/system/feature_items/images/30_neptune.png",
+    "Pluto": "https://solarsystem.nasa.gov/system/feature_items/images/31_pluto.png",
+    "Moon": "https://solarsystem.nasa.gov/system/feature_items/images/16_moon.png",
+    "Europa": "https://solarsystem.nasa.gov/system/feature_items/images/14_europa_1600.jpg",
+    "Titan": "https://solarsystem.nasa.gov/system/feature_items/images/20_titan_1600.jpg"
+}
+
 # Function to get planetary data
 def get_planetary_data(body_name):
     """Fetch planetary data from Le Systeme Solaire API and ensure correct unit conversions."""
@@ -59,30 +74,9 @@ def get_planetary_data(body_name):
         "Mean Radius (m)": data.get("meanRadius", None) * 1000 if data.get("meanRadius") else None,
         "Mean Solar Day (s)": data.get("sideralRotation", None) * 86400 if data.get("sideralRotation") else None,
         "Distance from Sun (m)": data.get("semimajorAxis", None) * 1000 if data.get("semimajorAxis") else None,
-        "Image": f"https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/{body_name.capitalize()}_by_Cassini.jpg/400px-{body_name.capitalize()}_by_Cassini.jpg"
     }
 
     return extracted_data
-
-# Function to get exoplanet data
-def get_exoplanet_data():
-    """Fetch exoplanet data from NASA Exoplanet Archive API."""
-    params = {
-        "query": "SELECT pl_name, pl_constellation, pl_orbper, pl_orbsmax, pl_rade, pl_bmassj FROM pscomppars",
-        "format": "json"
-    }
-
-    response = requests.get(exoplanet_api, params=params)
-
-    if response.status_code != 200:
-        return None
-
-    exoplanets = response.json()
-    
-    if not exoplanets or not isinstance(exoplanets, list):
-        return None
-
-    return exoplanets
 
 # Format values for LaTeX
 def format_value(name, value, unit=""):
@@ -98,65 +92,30 @@ def format_value(name, value, unit=""):
 # Streamlit UI
 st.title("Celestial Mechanics Simulator")
 
-# Selection between Solar System bodies or Exoplanets
-mode = st.radio("Choose Data Source", ["Solar System Objects", "Exoplanets"])
+# Selection of Solar System bodies
+selected_body = st.selectbox("Select a Celestial Body", list(horizons_bodies.keys()))
 
-if mode == "Solar System Objects":
-    selected_body = st.selectbox("Select a Celestial Body", list(horizons_bodies.keys()))
+if st.button("Fetch Data"):
+    body_id = horizons_bodies[selected_body]
+    planetary_data = get_planetary_data(body_id)
 
-    if st.button("Fetch Data"):
-        body_id = horizons_bodies[selected_body]
-        planetary_data = get_planetary_data(body_id)
+    st.subheader("Extracted Data:")
+    formatted_latex = [
+        format_value(r"\text{Mass}", planetary_data.get("Mass (kg)"), "kg"),
+        format_value(r"\text{Sidereal Orbital Period}", planetary_data.get("Sidereal Orbital Period (s)"), "s"),
+        format_value(r"\text{Mean Radius}", planetary_data.get("Mean Radius (m)"), "m"),
+        format_value(r"\text{Mean Solar Day}", planetary_data.get("Mean Solar Day (s)"), "s"),
+        format_value(r"\text{Distance from Sun}", planetary_data.get("Distance from Sun (m)"), "m"),
+    ]
 
-        st.subheader("Extracted Data:")
-        formatted_latex = [
-            format_value(r"\text{Mass}", planetary_data.get("Mass (kg)"), "kg"),
-            format_value(r"\text{Sidereal Orbital Period}", planetary_data.get("Sidereal Orbital Period (s)"), "s"),
-            format_value(r"\text{Mean Radius}", planetary_data.get("Mean Radius (m)"), "m"),
-            format_value(r"\text{Mean Solar Day}", planetary_data.get("Mean Solar Day (s)"), "s"),
-            format_value(r"\text{Distance from Sun}", planetary_data.get("Distance from Sun (m)"), "m"),
-        ]
+    for latex_string in formatted_latex:
+        st.latex(latex_string)
 
-        for latex_string in formatted_latex:
-            st.latex(latex_string)
+    # Display the celestial symbol if available
+    symbol = celestial_symbols.get(selected_body, "N/A")
+    st.markdown(f"### **Celestial Symbol: {symbol}**")
 
-        # Display the celestial symbol if available
-        symbol = celestial_symbols.get(selected_body, "N/A")
-        st.markdown(f"### **Celestial Symbol: {symbol}**")
-
-        # Display the image of the celestial body
-        image_url = planetary_data.get("Image", "")
+    # Display the NASA JPL image of the celestial body
+    image_url = nasa_images.get(selected_body, "")
+    if image_url:
         st.image(image_url, caption=f"Image of {selected_body}", use_container_width=True)
-
-elif mode == "Exoplanets":
-    exoplanets = get_exoplanet_data()
-
-    if exoplanets and len(exoplanets) > 0:
-        exoplanet_names = [planet["pl_name"] for planet in exoplanets]
-        selected_exoplanet = st.selectbox("Select an Exoplanet", exoplanet_names)
-
-        if st.button("Fetch Exoplanet Data"):
-            planet_data = next((p for p in exoplanets if p["pl_name"] == selected_exoplanet), None)
-
-            if planet_data:
-                extracted_data = {
-                    "Mass (kg)": float(planet_data.get("pl_bmassj", 1.0)) * 1.898e27,  # Convert Jupiter masses to kg
-                    "Semi-Major Axis (m)": float(planet_data.get("pl_orbsmax", 1.0)) * AU_TO_METERS,  # Convert AU to meters
-                    "Orbital Period (s)": float(planet_data.get("pl_orbper", 1.0)) * 86400,  # Convert days to seconds
-                    "Constellation": planet_data.get("pl_constellation", "Unknown"),  # Constellation the exoplanet is in
-                }
-
-                st.subheader("Extracted Data:")
-                formatted_latex = [
-                    format_value(r"\text{Mass}", extracted_data.get("Mass (kg)"), "kg"),
-                    format_value(r"\text{Semi-Major Axis}", extracted_data.get("Semi-Major Axis (m)"), "m"),
-                    format_value(r"\text{Orbital Period}", extracted_data.get("Orbital Period (s)"), "s"),
-                ]
-
-                for latex_string in formatted_latex:
-                    st.latex(latex_string)
-
-                # Display the constellation instead of a symbol
-                st.markdown(f"### **Constellation: {extracted_data['Constellation']}**")
-    else:
-        st.warning("No exoplanet data available. Check API connectivity.")
