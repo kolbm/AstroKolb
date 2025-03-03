@@ -62,7 +62,7 @@ def get_planetary_data(body_name):
         "Mean Radius": (radius, "m"),
         "Mean Solar Day": (data.get("sideralRotation", None) * 86400 if data.get("sideralRotation") else None, "s"),
         "Distance from Sun": (data.get("semimajorAxis", None) * 1000 if data.get("semimajorAxis") else None, "m"),
-        "Surface Gravity": (surface_gravity, "m/s^2"),
+        "Surface Gravity": (surface_gravity, r"m/s^2"),
         "Escape Velocity": (escape_velocity, "m/s"),
     }
     
