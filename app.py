@@ -5,106 +5,42 @@ import random
 
 # Constants
 G = 6.674e-11  # Gravitational constant (m³/kg/s²)
-AU_TO_METERS = 1.496e+11  # Convert AU to meters
 
 # API endpoint for solar system objects
 solar_system_api = "https://api.le-systeme-solaire.net/rest/bodies/"
 
 # Dictionary of known celestial bodies with their API identifiers
 horizons_bodies = {
-    # Planets
-    "Mercury": "mercure",
-    "Venus": "venus",
-    "Earth": "terre",
-    "Mars": "mars",
-    "Jupiter": "jupiter",
-    "Saturn": "saturne",
-    "Uranus": "uranus",
-    "Neptune": "neptune",
-    "Pluto": "pluton",
-
-    # Dwarf Planets
-    "Ceres": "ceres",
-    "Eris": "eris",
-    "Haumea": "haumea",
-    "Makemake": "makemake",
-
-    # Moons
-    "Moon": "lune",
-    "Europa": "europa",
-    "Ganymede": "ganymede",
-    "Callisto": "callisto",
-    "Io": "io",
-    "Triton": "triton",
-    "Enceladus": "enceladus",
-    "Titan": "titan",
-
-    # Asteroids
-    "Vesta": "vesta",
-    "Pallas": "pallas",
-    "Hygiea": "hygiea"
+    "Mercury": "mercure", "Venus": "venus", "Earth": "terre", "Mars": "mars",
+    "Jupiter": "jupiter", "Saturn": "saturne", "Uranus": "uranus", "Neptune": "neptune",
+    "Pluto": "pluton", "Ceres": "ceres", "Eris": "eris", "Haumea": "haumea", "Makemake": "makemake",
+    "Moon": "lune", "Europa": "europa", "Ganymede": "ganymede", "Callisto": "callisto",
+    "Io": "io", "Triton": "triton", "Enceladus": "enceladus", "Titan": "titan",
+    "Vesta": "vesta", "Pallas": "pallas", "Hygiea": "hygiea"
 }
 
 # Categories for celestial objects
 object_categories = {
-    "Mercury": "Planet",
-    "Venus": "Planet",
-    "Earth": "Planet",
-    "Mars": "Planet",
-    "Jupiter": "Planet",
-    "Saturn": "Planet",
-    "Uranus": "Planet",
-    "Neptune": "Planet",
-    "Pluto": "Dwarf Planet",
-    "Ceres": "Dwarf Planet",
-    "Eris": "Dwarf Planet",
-    "Haumea": "Dwarf Planet",
-    "Makemake": "Dwarf Planet",
-    "Moon": "Planetary Satellite (Moon)",
-    "Europa": "Planetary Satellite (Moon)",
-    "Ganymede": "Planetary Satellite (Moon)",
-    "Callisto": "Planetary Satellite (Moon)",
-    "Io": "Planetary Satellite (Moon)",
-    "Triton": "Planetary Satellite (Moon)",
-    "Enceladus": "Planetary Satellite (Moon)",
-    "Titan": "Planetary Satellite (Moon)",
-    "Vesta": "Asteroid",
-    "Pallas": "Asteroid",
+    "Mercury": "Planet", "Venus": "Planet", "Earth": "Planet", "Mars": "Planet",
+    "Jupiter": "Planet", "Saturn": "Planet", "Uranus": "Planet", "Neptune": "Planet",
+    "Pluto": "Dwarf Planet", "Ceres": "Dwarf Planet", "Eris": "Dwarf Planet",
+    "Haumea": "Dwarf Planet", "Makemake": "Dwarf Planet", "Moon": "Planetary Satellite (Moon)",
+    "Europa": "Planetary Satellite (Moon)", "Ganymede": "Planetary Satellite (Moon)",
+    "Callisto": "Planetary Satellite (Moon)", "Io": "Planetary Satellite (Moon)",
+    "Triton": "Planetary Satellite (Moon)", "Enceladus": "Planetary Satellite (Moon)",
+    "Titan": "Planetary Satellite (Moon)", "Vesta": "Asteroid", "Pallas": "Asteroid",
     "Hygiea": "Asteroid"
 }
 
 # Celestial Symbols
 celestial_symbols = {
-    "Mercury": "☿",
-    "Venus": "♀",
-    "Earth": "⊕",
-    "Mars": "♂",
-    "Jupiter": "♃",
-    "Saturn": "♄",
-    "Uranus": "♅",
-    "Neptune": "♆",
-    "Pluto": "♇",
-    "Moon": "☽",
-    "Europa": "🜁",
-    "Titan": "🜂"
+    "Mercury": "☿", "Venus": "♀", "Earth": "⊕", "Mars": "♂",
+    "Jupiter": "♃", "Saturn": "♄", "Uranus": "♅", "Neptune": "♆",
+    "Pluto": "♇", "Moon": "☽", "Europa": "🜁", "Titan": "🜂"
 }
 
 # Random symbols for celestial bodies with no official symbol
 random_symbols = ["🦄", "🐦‍🔥", "🦖", "🐲"]
-
-# Wikipedia GIFs for Solar System Objects
-wikipedia_gifs = {
-    "Mercury": "https://upload.wikimedia.org/wikipedia/commons/d/d0/Mercury.gif",
-    "Venus": "https://upload.wikimedia.org/wikipedia/commons/0/0e/Venus_Rotation_Movie.gif",
-    "Earth": "https://upload.wikimedia.org/wikipedia/commons/3/32/Earth_rotation.gif",
-    "Mars": "https://upload.wikimedia.org/wikipedia/commons/3/34/Spinning_Mars.gif",
-    "Jupiter": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Jupiter_rotation_over_3_hours_with_11_inch_telescope.gif/220px-Jupiter_rotation_over_3_hours_with_11_inch_telescope.gif",
-    "Saturn": "https://upload.wikimedia.org/wikipedia/commons/f/fe/Saturnoppositions-animated.gif",
-    "Uranus": "https://upload.wikimedia.org/wikipedia/commons/2/20/Uranus_orientation_1985-2030.gif",
-    "Neptune": "https://upload.wikimedia.org/wikipedia/commons/6/6d/Neptune.gif",
-    "Pluto": "https://upload.wikimedia.org/wikipedia/commons/f/f9/Pluto_rotation_movie.gif",
-    "Moon": "https://upload.wikimedia.org/wikipedia/commons/c/c0/Lunar_libration_with_phase2.gif"
-}
 
 # Function to get planetary data
 def get_planetary_data(body_name):
@@ -121,15 +57,30 @@ def get_planetary_data(body_name):
     escape_velocity = np.sqrt(2 * G * mass / radius) if (mass and radius) else None
 
     extracted_data = {
-        "Mass": mass,
-        "Sidereal Orbital Period": data.get("sideralOrbit", None) * 86400 if data.get("sideralOrbit") else None,
-        "Mean Radius": radius,
-        "Mean Solar Day": data.get("sideralRotation", None) * 86400 if data.get("sideralRotation") else None,
-        "Distance from Sun": data.get("semimajorAxis", None) * 1000 if data.get("semimajorAxis") else None,
-        "Surface Gravity": surface_gravity,
-        "Escape Velocity": escape_velocity
+        "Mass": (mass, "kg"),
+        "Sidereal Orbital Period": (data.get("sideralOrbit", None) * 86400 if data.get("sideralOrbit") else None, "s"),
+        "Mean Radius": (radius, "m"),
+        "Mean Solar Day": (data.get("sideralRotation", None) * 86400 if data.get("sideralRotation") else None, "s"),
+        "Distance from Sun": (data.get("semimajorAxis", None) * 1000 if data.get("semimajorAxis") else None, "m"),
+        "Surface Gravity": (surface_gravity, "m/s^2"),
+        "Escape Velocity": (escape_velocity, "m/s")
     }
     return extracted_data
+
+# Format values for LaTeX
+def format_value(name, value, unit):
+    """Formats numerical values using LaTeX scientific notation, with standard notation for -2 ≤ exponent ≤ 2."""
+    if value is None:
+        return rf"\text{{{name}}} = \text{{Unknown}}"
+
+    exponent = int(np.floor(np.log10(abs(value)))) if value != 0 else 0
+    base = value / (10**exponent)
+
+    # If exponent is between -2 and 2, display in standard notation
+    if -2 <= exponent <= 2:
+        return rf"\text{{{name}}}: {value:.3f} \quad \text{{{unit}}}"
+    
+    return rf"\text{{{name}}}: {base:.3f} \times 10^{{{exponent}}} \quad \text{{{unit}}}"
 
 # Streamlit UI
 st.title("Celestial Mechanics Simulator")
@@ -143,21 +94,8 @@ if st.button("Fetch Data"):
 
     st.subheader(f"Category: **{category}**")
 
-    for key, value in planetary_data.items():
-        if value is not None:
-            exponent = int(np.floor(np.log10(abs(value)))) if value != 0 else 0
-            base = value / (10**exponent)
-
-            if -2 <= exponent <= 2:
-                st.latex(f"{value:.3f} \\quad \\text{{{key} }}")
-            else:
-                st.latex(f"{base:.3f} \\times 10^{{{exponent}}} \\quad \\text{{{key} }}")
-        else:
-            st.latex(f"\\text{{Unknown}} \\quad \\text{{{key} }}")
+    for key, (value, unit) in planetary_data.items():
+        st.latex(format_value(key, value, unit))
 
     symbol = celestial_symbols.get(selected_body, random.choice(random_symbols))
     st.markdown(f"<div style='text-align: center; font-size: 140px;'>{symbol}</div>", unsafe_allow_html=True)
-
-    image_url = wikipedia_gifs.get(selected_body, "")
-    if image_url:
-        st.image(image_url, caption=f"Rotating Image of {selected_body}", use_container_width=True)
