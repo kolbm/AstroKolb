@@ -56,7 +56,7 @@ def get_planetary_data(body_name):
         "Mean Radius": (radius, "m"),
         "Mean Solar Day": (data.get("sideralRotation", None) * 86400 if data.get("sideralRotation") else None, "s"),
         "Distance from Sun": (data.get("semimajorAxis", None) * 1000 if data.get("semimajorAxis") else None, "m"),
-        "Surface Gravity": (surface_gravity, r"m/s^2"),
+        "Surface Gravity": (surface_gravity, r"\text{m/s}^2"),
         "Escape Velocity": (escape_velocity, "m/s"),
     }
 
@@ -73,9 +73,9 @@ def format_value(name, value, unit):
 
     # If exponent is between -2 and 2, display in standard notation
     if -2 <= exponent <= 2:
-        return rf"\textbf{{{name}}}: {value:.3f} \quad \text{{{unit}}}"
+        return rf"\textbf{{{name}}}: {value:.3f} \quad {unit}"
     
-    return rf"\textbf{{{name}}}: {base:.3f} \times 10^{{{exponent}}} \quad \text{{{unit}}}"
+    return rf"\textbf{{{name}}}: {base:.3f} \times 10^{{{exponent}}} \quad {unit}"
 
 # Convert value to long form for copying
 def format_long_form(value):
@@ -93,9 +93,19 @@ if st.button("Fetch Data"):
     st.write("Fetching data...")  
     planetary_data = get_planetary_data(selected_body)
 
-    # Display centered and bold category title
+    # Display centered and bold category title with planetary symbol
     symbol = horizons_bodies[selected_body][1]
     st.markdown(f"<h2 style='text-align: center;'><b>{selected_body}</b> {symbol}</h2>", unsafe_allow_html=True)
+
+    # JavaScript to enable clipboard copying
+    st.markdown("""
+        <script>
+        function copyToClipboard(value) {
+            navigator.clipboard.writeText(value);
+            alert("Copied: " + value);
+        }
+        </script>
+    """, unsafe_allow_html=True)
 
     # Display planetary data with copy buttons
     for key, (value, unit) in planetary_data.items():
@@ -108,5 +118,9 @@ if st.button("Fetch Data"):
         # Convert value for copying (long form)
         if value is not None:
             long_form_value = format_long_form(value)
-            col2.button(f"📋 Copy", key=f"copy_{key}", on_click=lambda v=long_form_value: st.session_state.update({"clipboard": v}))
 
+            # Button triggers JavaScript function to copy value
+            button_html = f"""
+            <button onclick="copyToClipboard('{long_form_value}')">📋 Copy</button>
+            """
+            col2.markdown(button_html, unsafe_allow_html=True)
