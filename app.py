@@ -50,7 +50,6 @@ def get_planetary_data(body_name):
     # Extract relevant fields, ensuring correct unit conversions
     extracted_data = {
         "Mass (kg)": data.get("mass", {}).get("massValue", None) * 10**data.get("mass", {}).get("massExponent", 0) if data.get("mass") else None,
-        "Orbital Speed (m/s)": data.get("avgVelocity", None) * 1000 if data.get("avgVelocity") else None,
         "Sidereal Orbital Period (s)": data.get("sideralOrbit", None) * 86400 if data.get("sideralOrbit") else None,
         "Mean Radius (m)": data.get("meanRadius", None) * 1000 if data.get("meanRadius") else None,
         "Mean Solar Day (s)": data.get("sideralRotation", None) * 86400 if data.get("sideralRotation") else None,
@@ -63,7 +62,7 @@ def get_exoplanet_data():
     """Fetch exoplanet data from NASA Exoplanet Archive API."""
     API_URL = "https://exoplanetarchive.ipac.caltech.edu/TAP/sync"
     params = {
-        "query": "SELECT pl_name, hostname, pl_orbper, pl_orbsmax, pl_rade, pl_bmassj FROM pscomppars",
+        "query": "SELECT pl_name, hostname, pl_orbper, pl_orbsmax, pl_rade, pl_bmassj, pl_constellation FROM pscomppars",
         "format": "json"
     }
 
@@ -99,7 +98,6 @@ if mode == "Solar System Objects":
         st.subheader("Extracted Data:")
         formatted_latex = [
             format_value(r"\text{Mass}", planetary_data.get("Mass (kg)"), "kg"),
-            format_value(r"\text{Orbital Speed}", planetary_data.get("Orbital Speed (m/s)"), "m/s"),
             format_value(r"\text{Sidereal Orbital Period}", planetary_data.get("Sidereal Orbital Period (s)"), "s"),
             format_value(r"\text{Mean Radius}", planetary_data.get("Mean Radius (m)"), "m"),
             format_value(r"\text{Mean Solar Day}", planetary_data.get("Mean Solar Day (s)"), "s"),
@@ -128,7 +126,7 @@ elif mode == "Exoplanets":
                     "Mass (kg)": float(planet_data.get("pl_bmassj", 1.0)) * 1.898e27,  # Convert Jupiter masses to kg
                     "Semi-Major Axis (m)": float(planet_data.get("pl_orbsmax", 1.0)) * AU_TO_METERS,  # Convert AU to meters
                     "Orbital Period (s)": float(planet_data.get("pl_orbper", 1.0)) * 86400,  # Convert days to seconds
-                    "Eccentricity": float(planet_data.get("pl_orbeccen", 0.0)),  # Default to circular orbit
+                    "Constellation": planet_data.get("pl_constellation", "Unknown"),  # Constellation the exoplanet is in
                 }
 
                 st.subheader("Extracted Data:")
@@ -136,11 +134,10 @@ elif mode == "Exoplanets":
                     format_value(r"\text{Mass}", extracted_data.get("Mass (kg)"), "kg"),
                     format_value(r"\text{Semi-Major Axis}", extracted_data.get("Semi-Major Axis (m)"), "m"),
                     format_value(r"\text{Orbital Period}", extracted_data.get("Orbital Period (s)"), "s"),
-                    format_value(r"\text{Eccentricity}", extracted_data.get("Eccentricity"), ""),
                 ]
 
                 for latex_string in formatted_latex:
                     st.latex(latex_string)
 
-                # No known symbols for exoplanets, so we display "N/A"
-                st.markdown("### **Celestial Symbol: N/A**")
+                # Display the constellation instead of a symbol
+                st.markdown(f"### **Constellation: {extracted_data['Constellation']}**")
