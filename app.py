@@ -1,7 +1,6 @@
 import streamlit as st
 import requests
 import numpy as np
-import random
 
 # Constants
 G = 6.674e-11  # Gravitational constant (m³/kg/s²)
@@ -17,12 +16,6 @@ horizons_bodies = {
     "Moon": "lune", "Europa": "europa", "Ganymede": "ganymede", "Callisto": "callisto",
     "Io": "io", "Triton": "triton", "Enceladus": "enceladus", "Titan": "titan",
     "Vesta": "vesta", "Pallas": "pallas", "Hygiea": "hygiea"
-}
-
-# Parent body (for moons)
-moon_orbits = {
-    "Moon": "Earth", "Europa": "Jupiter", "Ganymede": "Jupiter", "Callisto": "Jupiter",
-    "Io": "Jupiter", "Triton": "Neptune", "Enceladus": "Saturn", "Titan": "Saturn"
 }
 
 # Function to get planetary data
@@ -65,11 +58,8 @@ def get_planetary_data(body_name):
         "Surface Gravity": (surface_gravity, r"m/s^2"),
         "Escape Velocity": (escape_velocity, "m/s"),
     }
-    
-    # If the object is a moon, return its orbit information
-    orbits_text = moon_orbits.get(body_name, None)
 
-    return extracted_data, orbits_text
+    return extracted_data
 
 # Format values for LaTeX
 def format_value(name, value, unit):
@@ -100,7 +90,7 @@ selected_body = st.selectbox("Select a Celestial Body", list(horizons_bodies.key
 
 if st.button("Fetch Data"):
     st.write("Fetching data...")  
-    planetary_data, orbits = get_planetary_data(selected_body)
+    planetary_data = get_planetary_data(selected_body)
 
     # Display centered and bold category title
     st.markdown(f"<h2 style='text-align: center;'><b>{selected_body}</b></h2>", unsafe_allow_html=True)
@@ -116,33 +106,5 @@ if st.button("Fetch Data"):
         # Convert value for copying (long form)
         if value is not None:
             long_form_value = format_long_form(value)
+            col2.text_input("", long_form_value, key=f"copy_{key}")
 
-            # JavaScript to copy to clipboard
-            js_code = f"""
-            <script>
-            function copyToClipboard() {{
-                navigator.clipboard.writeText("{long_form_value}");
-                alert("Copied: {long_form_value}");
-            }}
-            </script>
-            <button onclick="copyToClipboard()">📋 Copy</button>
-            """
-            col2.markdown(js_code, unsafe_allow_html=True)
-
-    # Display what the moon orbits (only if applicable)
-    if orbits:
-        st.latex(rf"\textbf{{Orbits}}: \text{{{orbits}}}")
-
-    # Display celestial image (if available)
-    celestial_images = {
-        "Mercury": "https://upload.wikimedia.org/wikipedia/commons/d/d0/Mercury.gif",
-        "Venus": "https://upload.wikimedia.org/wikipedia/commons/0/0e/Venus_Rotation_Movie.gif",
-        "Earth": "https://upload.wikimedia.org/wikipedia/commons/3/32/Earth_rotation.gif",
-        "Mars": "https://upload.wikimedia.org/wikipedia/commons/3/34/Spinning_Mars.gif",
-        "Jupiter": "https://upload.wikimedia.org/wikipedia/commons/6/6d/Neptune.gif",
-        "Saturn": "https://upload.wikimedia.org/wikipedia/commons/f/fe/Saturnoppositions-animated.gif",
-        "Pluto": "https://upload.wikimedia.org/wikipedia/commons/f/f9/Pluto_rotation_movie.gif"
-    }
-
-    if selected_body in celestial_images:
-        st.image(celestial_images[selected_body], caption=f"Image of {selected_body}", use_container_width=True)
