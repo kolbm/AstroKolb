@@ -100,9 +100,9 @@ def format_value(name, value, unit=""):
 
     # If exponent is between -2 and 2, display in standard notation
     if -2 <= exponent <= 2:
-        return rf"{name} = {value:.3f} \text{{ {unit} }}"
+        return rf"{name} = {value:.3f} \, {unit}"
     
-    return rf"{name} = {base:.3f} \times 10^{{{exponent}}} \text{{ {unit} }}"
+    return rf"{name} = {base:.3f} \times 10^{{{exponent}}} \, {unit}"
 
 # Streamlit UI
 st.title("Celestial Mechanics Simulator")
@@ -131,7 +131,7 @@ if st.button("Fetch Data"):
     # Display the celestial symbol, now even larger
     symbol = celestial_symbols.get(selected_body, "N/A")
     st.markdown(
-        f"<div style='text-align: center; font-size: 120px;'>{symbol}</div>", 
+        f"<div style='text-align: center; font-size: 140px;'>{symbol}</div>", 
         unsafe_allow_html=True
     )
 
