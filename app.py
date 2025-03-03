@@ -59,7 +59,7 @@ def get_planetary_data(body_name):
         "Mean Radius (m)": data.get("meanRadius", None) * 1000 if data.get("meanRadius") else None,
         "Mean Solar Day (s)": data.get("sideralRotation", None) * 86400 if data.get("sideralRotation") else None,
         "Distance from Sun (m)": data.get("semimajorAxis", None) * 1000 if data.get("semimajorAxis") else None,
-        "Image": f"https://solarsystem.nasa.gov/system/feature_items/images/{body_name.lower()}_1.jpg"
+        "Image": f"https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/{body_name.capitalize()}_by_Cassini.jpg/400px-{body_name.capitalize()}_by_Cassini.jpg"
     }
 
     return extracted_data
@@ -73,11 +73,16 @@ def get_exoplanet_data():
     }
 
     response = requests.get(exoplanet_api, params=params)
-    
-    if response.status_code != 200 or not response.json():
+
+    if response.status_code != 200:
         return None
 
-    return response.json()
+    exoplanets = response.json()
+    
+    if not exoplanets or not isinstance(exoplanets, list):
+        return None
+
+    return exoplanets
 
 # Format values for LaTeX
 def format_value(name, value, unit=""):
@@ -121,13 +126,12 @@ if mode == "Solar System Objects":
 
         # Display the image of the celestial body
         image_url = planetary_data.get("Image", "")
-        if image_url:
-            st.image(image_url, caption=f"Image of {selected_body}", use_container_width=True)
+        st.image(image_url, caption=f"Image of {selected_body}", use_container_width=True)
 
 elif mode == "Exoplanets":
     exoplanets = get_exoplanet_data()
 
-    if exoplanets and isinstance(exoplanets, list) and len(exoplanets) > 0:
+    if exoplanets and len(exoplanets) > 0:
         exoplanet_names = [planet["pl_name"] for planet in exoplanets]
         selected_exoplanet = st.selectbox("Select an Exoplanet", exoplanet_names)
 
@@ -156,4 +160,3 @@ elif mode == "Exoplanets":
                 st.markdown(f"### **Constellation: {extracted_data['Constellation']}**")
     else:
         st.warning("No exoplanet data available. Check API connectivity.")
-
