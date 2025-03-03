@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 import numpy as np
+import re
 import plotly.graph_objects as go
 
 # Constants
@@ -19,7 +20,7 @@ horizons_bodies = {
 }
 
 def get_horizons_data(body_id):
-    """Fetch orbital data from NASA Horizons API and extract key values."""
+    """Fetch orbital data from NASA Horizons API and correctly parse the text response."""
     API_URL = "https://ssd.jpl.nasa.gov/api/horizons.api"
     params = {"format": "json", "COMMAND": body_id, "OBJ_DATA": "YES"}
 
@@ -38,19 +39,17 @@ def get_horizons_data(body_id):
 
     def extract_value(label, unit_conversion=1):
         """Extract numerical values from the text response."""
-        try:
-            line = next(line for line in result_text.split("\n") if label in line)
-            value = float(line.split("=")[1].split()[0]) * unit_conversion
-            return value
-        except (StopIteration, ValueError, IndexError):
-            return "Unknown"
+        match = re.search(rf"{label}\s*=\s*([\d\.\+\-e]+)", result_text)
+        if match:
+            return float(match.group(1)) * unit_conversion
+        return "Unknown"
 
     extracted_data = {
-        "Mass (kg)": extract_value("Mass x10^24", 1e24),
+        "Mass (kg)": extract_value("Mass x10\\^24", 1e24),
         "Orbital Speed (m/s)": extract_value("Orbital speed, km/s", 1000),
         "Sidereal Orbital Period (s)": extract_value("Sidereal orb period", 86400),
         "Escape Velocity (m/s)": extract_value("Escape velocity", 1000),
-        "Mean Radius (m)": extract_value("Vol. Mean Radius (km)", 1000),
+        "Mean Radius (m)": extract_value("Vol. Mean Radius \\(km\\)", 1000),
         "Mean Solar Day (s)": extract_value("Mean solar day", 1),
         "Distance from Sun (m)": extract_value("Hill's sphere radius", AU_TO_METERS),
     }
