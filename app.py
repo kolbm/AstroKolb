@@ -38,7 +38,6 @@ def get_planetary_data(body_name):
         "Mass (kg)": data.get("mass", {}).get("massValue", None) * 10**data.get("mass", {}).get("massExponent", 0) if data.get("mass") else None,
         "Orbital Speed (m/s)": data.get("avgVelocity", None) * 1000 if data.get("avgVelocity") else None,
         "Sidereal Orbital Period (s)": data.get("sideralOrbit", None) * 86400 if data.get("sideralOrbit") else None,
-        "Escape Velocity (m/s)": data.get("escape", None) * 1000 if data.get("escape") else None,  # This was previously too large
         "Mean Radius (m)": data.get("meanRadius", None) * 1000 if data.get("meanRadius") else None,
         "Mean Solar Day (s)": data.get("sideralRotation", None) * 86400 if data.get("sideralRotation") else None,
         "Distance from Sun (m)": data.get("semimajorAxis", None) * 1000 if data.get("semimajorAxis") else None,
@@ -88,7 +87,6 @@ if mode == "Solar System Objects":
             format_value(r"\text{Mass}", planetary_data.get("Mass (kg)"), "kg"),
             format_value(r"\text{Orbital Speed}", planetary_data.get("Orbital Speed (m/s)"), "m/s"),
             format_value(r"\text{Sidereal Orbital Period}", planetary_data.get("Sidereal Orbital Period (s)"), "s"),
-            format_value(r"\text{Escape Velocity}", planetary_data.get("Escape Velocity (m/s)"), "m/s"),
             format_value(r"\text{Mean Radius}", planetary_data.get("Mean Radius (m)"), "m"),
             format_value(r"\text{Mean Solar Day}", planetary_data.get("Mean Solar Day (s)"), "s"),
             format_value(r"\text{Distance from Sun}", planetary_data.get("Distance from Sun (m)"), "m"),
