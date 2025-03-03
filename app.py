@@ -30,7 +30,7 @@ def get_planetary_data(body_name):
         response.raise_for_status()
     except requests.exceptions.RequestException as e:
         st.error(f"API request failed: {e}")
-        return {}, None  
+        return {}
 
     data = response.json()
     
@@ -102,7 +102,7 @@ if st.button("Fetch Data"):
     st.markdown(f"<h2 style='text-align: center;'><b>{selected_body}</b> {symbol}</h2>", unsafe_allow_html=True)
 
     # Display image
-    st.image(image_url, caption=f"Image of {selected_body}", use_column_width=True)
+    st.image(image_url, caption=f"Image of {selected_body}", use_container_width=True)
 
     # JavaScript to enable clipboard copying
     st.markdown("""
@@ -128,6 +128,6 @@ if st.button("Fetch Data"):
 
             # Button triggers JavaScript function to copy value
             button_html = f"""
-            <button onclick="copyToClipboard('{long_form_value}')">📋 Copy</button>
+            <button onclick="copyToClipboard('{long_form_value}')">📋 Copy {key}</button>
             """
             col2.markdown(button_html, unsafe_allow_html=True)
