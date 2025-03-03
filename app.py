@@ -5,6 +5,7 @@ import plotly.graph_objects as go
 
 # Constants
 G = 6.674e-11  # Gravitational constant (m³/kg/s²)
+AU_TO_METERS = 1.496e+11  # 1 AU to meters
 
 # Dictionary of known celestial bodies with NASA Horizons API IDs
 horizons_bodies = {
@@ -18,21 +19,43 @@ horizons_bodies = {
 }
 
 def get_horizons_data(body_id):
-    """Fetch orbital data from NASA Horizons API."""
+    """Fetch orbital data from NASA Horizons API and extract key values."""
     API_URL = "https://ssd.jpl.nasa.gov/api/horizons.api"
-    params = {
-        "format": "json",
-        "COMMAND": body_id,
-        "OBJ_DATA": "YES"
-    }
-    
-    response = requests.get(API_URL, params=params)
+    params = {"format": "json", "COMMAND": body_id, "OBJ_DATA": "YES"}
 
-    if response.status_code == 200:
-        return response.json()
-    else:
+    response = requests.get(API_URL, params=params)
+    if response.status_code != 200:
         st.error(f"Failed to retrieve data from NASA Horizons. HTTP Status: {response.status_code}")
         return None
+
+    data = response.json()
+    if "result" not in data:
+        st.error("Invalid API response: 'result' key missing.")
+        st.json(data)  # Debugging output
+        return None
+
+    result_text = data["result"]
+
+    def extract_value(label, unit_conversion=1):
+        """Extract numerical values from the text response."""
+        try:
+            line = next(line for line in result_text.split("\n") if label in line)
+            value = float(line.split("=")[1].split()[0]) * unit_conversion
+            return value
+        except (StopIteration, ValueError, IndexError):
+            return "Unknown"
+
+    extracted_data = {
+        "Mass (kg)": extract_value("Mass x10^24", 1e24),
+        "Orbital Speed (m/s)": extract_value("Orbital speed, km/s", 1000),
+        "Sidereal Orbital Period (s)": extract_value("Sidereal orb period", 86400),
+        "Escape Velocity (m/s)": extract_value("Escape velocity", 1000),
+        "Mean Radius (m)": extract_value("Vol. Mean Radius (km)", 1000),
+        "Mean Solar Day (s)": extract_value("Mean solar day", 1),
+        "Distance from Sun (m)": extract_value("Hill's sphere radius", AU_TO_METERS),
+    }
+
+    return extracted_data
 
 def get_exoplanet_data():
     """Fetch exoplanet data from NASA Exoplanet Archive API."""
@@ -43,23 +66,22 @@ def get_exoplanet_data():
     }
 
     response = requests.get(API_URL, params=params)
-
-    if response.status_code == 200:
-        return response.json()
-    else:
+    if response.status_code != 200:
         st.error(f"Failed to retrieve exoplanet data. HTTP Status: {response.status_code}")
         return None
 
+    return response.json()
+
 def calculate_orbital_parameters(mass, semi_major_axis, eccentricity):
     """Calculate orbital properties based on UCM and UG."""
-    if mass is None or semi_major_axis is None:
-        return None, None, None, None  # Prevent NaN errors
-    
+    if mass == "Unknown" or semi_major_axis == "Unknown":
+        return "Unknown", "Unknown", "Unknown", "Unknown"
+
     GM = G * mass
     r = semi_major_axis * (1 - eccentricity)
-    
+
     if r == 0:
-        return None, None, None, None
+        return "Unknown", "Unknown", "Unknown", "Unknown"
 
     orbital_velocity = np.sqrt(GM / r)
     centripetal_acceleration = orbital_velocity**2 / r
@@ -70,7 +92,7 @@ def calculate_orbital_parameters(mass, semi_major_axis, eccentricity):
 
 def plot_3d_orbit(semi_major_axis, eccentricity):
     """Plot a 3D orbit using Plotly."""
-    if semi_major_axis is None or semi_major_axis == 0:
+    if semi_major_axis == "Unknown":
         st.error("Cannot plot orbit: missing or invalid semi-major axis.")
         return None
 
@@ -101,44 +123,12 @@ if mode == "Solar System Objects":
 
     if st.button("Fetch Data"):
         body_id = horizons_bodies[selected_body]
-        data = get_horizons_data(body_id)
+        extracted_data = get_horizons_data(body_id)
 
-        if data:
-            st.json(data)  # Debugging: Display raw API response
-
-            try:
-                mass = None
-                if "GM" in data["result"]:
-                    try:
-                        gm_value = float(data["result"]["GM"].split()[0])  # Extract GM
-                        mass = gm_value / G  # Convert GM to mass
-                    except ValueError:
-                        st.error("Could not convert GM to mass.")
-                
-                semi_major_axis = float(data["result"].get("a", "1.0")) * 1.496e+11  # Convert AU to meters
-                eccentricity = float(data["result"].get("e", "0.0"))  # Default to circular orbit
-
-                if mass is None:
-                    st.error("Mass data not found.")
-                if semi_major_axis is None:
-                    st.error("Semi-major axis data not found.")
-
-                orbital_velocity, centripetal_acceleration, escape_velocity, orbital_period = calculate_orbital_parameters(mass, semi_major_axis, eccentricity)
-
-                st.write(f"**Mass**: {mass:.2e} kg" if mass else "Mass unavailable")
-                st.write(f"**Semi-Major Axis**: {semi_major_axis:.2e} m")
-                st.write(f"**Eccentricity**: {eccentricity:.3f}")
-                st.write(f"**Orbital Velocity**: {orbital_velocity:.2f} m/s" if orbital_velocity else "Unavailable")
-                st.write(f"**Centripetal Acceleration**: {centripetal_acceleration:.2f} m/s²" if centripetal_acceleration else "Unavailable")
-                st.write(f"**Escape Velocity**: {escape_velocity:.2f} m/s" if escape_velocity else "Unavailable")
-                st.write(f"**Orbital Period**: {orbital_period:.2f} s" if orbital_period else "Unavailable")
-
-                # 3D Visualization
-                st.subheader("3D Orbital Visualization")
-                st.plotly_chart(plot_3d_orbit(semi_major_axis, eccentricity))
-
-            except KeyError:
-                st.error("Missing orbital data for the selected body.")
+        if extracted_data:
+            st.subheader("Extracted Data:")
+            for key, value in extracted_data.items():
+                st.write(f"**{key}:** {value}")
 
 elif mode == "Exoplanets":
     exoplanets = get_exoplanet_data()
@@ -151,20 +141,17 @@ elif mode == "Exoplanets":
             planet_data = next((p for p in exoplanets if p["pl_name"] == selected_exoplanet), None)
 
             if planet_data:
-                semi_major_axis = float(planet_data.get("pl_orbsmax", "1.0")) * 1.496e+11  # Convert AU to meters
-                mass = float(planet_data.get("pl_bmassj", "1.0")) * 1.898e27  # Convert Jupiter masses to kg
-                eccentricity = float(planet_data.get("pl_orbeccen", "0.0"))  # Default to circular orbit
+                extracted_data = {
+                    "Mass (kg)": float(planet_data.get("pl_bmassj", "1.0")) * 1.898e27,  # Convert Jupiter masses to kg
+                    "Semi-Major Axis (m)": float(planet_data.get("pl_orbsmax", "1.0")) * AU_TO_METERS,  # Convert AU to meters
+                    "Orbital Period (s)": float(planet_data.get("pl_orbper", "1.0")) * 86400,  # Convert days to seconds
+                    "Eccentricity": float(planet_data.get("pl_orbeccen", "0.0")),  # Default to circular orbit
+                }
 
-                orbital_velocity, centripetal_acceleration, escape_velocity, orbital_period = calculate_orbital_parameters(mass, semi_major_axis, eccentricity)
-
-                st.write(f"**Mass**: {mass:.2e} kg")
-                st.write(f"**Semi-Major Axis**: {semi_major_axis:.2e} m")
-                st.write(f"**Eccentricity**: {eccentricity:.3f}")
-                st.write(f"**Orbital Velocity**: {orbital_velocity:.2f} m/s")
-                st.write(f"**Centripetal Acceleration**: {centripetal_acceleration:.2f} m/s²")
-                st.write(f"**Escape Velocity**: {escape_velocity:.2f} m/s")
-                st.write(f"**Orbital Period**: {orbital_period:.2f} s")
+                st.subheader("Extracted Data:")
+                for key, value in extracted_data.items():
+                    st.write(f"**{key}:** {value}")
 
                 # 3D Visualization
                 st.subheader("3D Orbital Visualization")
-                st.plotly_chart(plot_3d_orbit(semi_major_axis, eccentricity))
+                st.plotly_chart(plot_3d_orbit(extracted_data["Semi-Major Axis (m)"], extracted_data["Eccentricity"]))
