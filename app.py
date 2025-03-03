@@ -27,22 +27,21 @@ horizons_bodies = {
 def get_planetary_data(body_name):
     """Fetch planetary data from Le Systeme Solaire API."""
     response = requests.get(f"{solar_system_api}{body_name}")
-    
+
     if response.status_code != 200:
-        st.error(f"Failed to retrieve planetary data. HTTP Status: {response.status_code}")
-        return None
+        return {}
 
     data = response.json()
     
-    # Extract the relevant fields
+    # Extract relevant fields, using defaults if missing
     extracted_data = {
-        "Mass (kg)": data.get("mass", {}).get("massValue", "Unknown") * 10**data.get("mass", {}).get("massExponent", 0),
-        "Orbital Speed (m/s)": data.get("avgVelocity", "Unknown") * 1000,  # Convert from km/s
-        "Sidereal Orbital Period (s)": data.get("sideralOrbit", "Unknown") * 86400,  # Convert from days
-        "Escape Velocity (m/s)": data.get("escape", "Unknown") * 1000,  # Convert from km/s
-        "Mean Radius (m)": data.get("meanRadius", "Unknown") * 1000,  # Convert from km
-        "Mean Solar Day (s)": data.get("sideralRotation", "Unknown") * 86400,  # Convert from days
-        "Distance from Sun (m)": data.get("semimajorAxis", "Unknown") * 1000,  # Convert from km
+        "Mass (kg)": data.get("mass", {}).get("massValue", None) * 10**data.get("mass", {}).get("massExponent", 0) if data.get("mass") else None,
+        "Orbital Speed (m/s)": data.get("avgVelocity", None) * 1000 if data.get("avgVelocity") else None,
+        "Sidereal Orbital Period (s)": data.get("sideralOrbit", None) * 86400 if data.get("sideralOrbit") else None,
+        "Escape Velocity (m/s)": data.get("escape", None) * 1000 if data.get("escape") else None,
+        "Mean Radius (m)": data.get("meanRadius", None) * 1000 if data.get("meanRadius") else None,
+        "Mean Solar Day (s)": data.get("sideralRotation", None) * 86400 if data.get("sideralRotation") else None,
+        "Distance from Sun (m)": data.get("semimajorAxis", None) * 1000 if data.get("semimajorAxis") else None,
     }
 
     return extracted_data
@@ -57,32 +56,15 @@ def get_exoplanet_data():
 
     response = requests.get(API_URL, params=params)
     if response.status_code != 200:
-        st.error(f"Failed to retrieve exoplanet data. HTTP Status: {response.status_code}")
         return None
 
     return response.json()
 
-def plot_3d_orbit(semi_major_axis, eccentricity):
-    """Plot a 3D orbit using Plotly."""
-    if semi_major_axis == "Unknown":
-        st.error("Cannot plot orbit: missing or invalid semi-major axis.")
-        return None
-
-    theta = np.linspace(0, 2*np.pi, 200)
-    a = semi_major_axis
-    b = a * np.sqrt(1 - eccentricity**2)  # Semi-minor axis
-
-    x = a * np.cos(theta) - eccentricity * a  # Adjust for center shift
-    y = b * np.sin(theta)
-    z = np.zeros_like(x)
-
-    fig = go.Figure()
-    fig.add_trace(go.Scatter3d(x=x, y=y, z=z, mode='lines', name="Orbit Path"))
-    fig.add_trace(go.Scatter3d(x=[-eccentricity * a], y=[0], z=[0], mode='markers', marker=dict(size=6, color='red'), name="Central Body"))
-    fig.add_trace(go.Scatter3d(x=[(1-eccentricity) * a], y=[0], z=[0], mode='markers', marker=dict(size=4, color='blue'), name="Second Focus"))
-
-    fig.update_layout(scene=dict(xaxis_title='X Position (m)', yaxis_title='Y Position (m)', zaxis_title='Z Position'))
-    return fig
+def format_value(value):
+    """Formats numerical values in scientific notation using LaTeX."""
+    if value is None:
+        return "Unknown"
+    return f"$ {value:.3e} $"
 
 # Streamlit UI
 st.title("Celestial Mechanics Simulator")
@@ -95,12 +77,14 @@ if mode == "Solar System Objects":
 
     if st.button("Fetch Data"):
         body_id = horizons_bodies[selected_body]
-        extracted_data = get_planetary_data(body_id)
+        planetary_data = get_planetary_data(body_id)
 
-        if extracted_data:
-            st.subheader("Extracted Data:")
-            for key, value in extracted_data.items():
-                st.write(f"**{key}:** {value}")
+        # Ensure no repeated "Unknown" values
+        cleaned_data = {key: format_value(planetary_data.get(key)) for key in planetary_data}
+
+        st.subheader("Extracted Data:")
+        for key, value in cleaned_data.items():
+            st.latex(f"{key.replace(' ', '_')} = {value}")
 
 elif mode == "Exoplanets":
     exoplanets = get_exoplanet_data()
@@ -114,16 +98,15 @@ elif mode == "Exoplanets":
 
             if planet_data:
                 extracted_data = {
-                    "Mass (kg)": float(planet_data.get("pl_bmassj", "1.0")) * 1.898e27,  # Convert Jupiter masses to kg
-                    "Semi-Major Axis (m)": float(planet_data.get("pl_orbsmax", "1.0")) * AU_TO_METERS,  # Convert AU to meters
-                    "Orbital Period (s)": float(planet_data.get("pl_orbper", "1.0")) * 86400,  # Convert days to seconds
-                    "Eccentricity": float(planet_data.get("pl_orbeccen", "0.0")),  # Default to circular orbit
+                    "Mass (kg)": float(planet_data.get("pl_bmassj", 1.0)) * 1.898e27,  # Convert Jupiter masses to kg
+                    "Semi-Major Axis (m)": float(planet_data.get("pl_orbsmax", 1.0)) * AU_TO_METERS,  # Convert AU to meters
+                    "Orbital Period (s)": float(planet_data.get("pl_orbper", 1.0)) * 86400,  # Convert days to seconds
+                    "Eccentricity": float(planet_data.get("pl_orbeccen", 0.0)),  # Default to circular orbit
                 }
 
-                st.subheader("Extracted Data:")
-                for key, value in extracted_data.items():
-                    st.write(f"**{key}:** {value}")
+                # Ensure no repeated "Unknown" values
+                cleaned_data = {key: format_value(extracted_data.get(key)) for key in extracted_data}
 
-                # 3D Visualization
-                st.subheader("3D Orbital Visualization")
-                st.plotly_chart(plot_3d_orbit(extracted_data["Semi-Major Axis (m)"], extracted_data["Eccentricity"]))
+                st.subheader("Extracted Data:")
+                for key, value in cleaned_data.items():
+                    st.latex(f"{key.replace(' ', '_')} = {value}")
