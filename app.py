@@ -60,7 +60,7 @@ def get_planetary_data(body_name):
         "Mean Radius": (radius, "m"),
         "Mean Solar Day": (data.get("sideralRotation", None) * 86400 if data.get("sideralRotation") else None, "s"),
         "Distance from Sun": (data.get("semimajorAxis", None) * 1000 if data.get("semimajorAxis") else None, "m"),
-        "Surface Gravity": (surface_gravity, r"\text{m/s}^2"),
+        "Surface Gravity": (surface_gravity, "m/s²"),
         "Escape Velocity": (escape_velocity, "m/s"),
     }
 
@@ -104,16 +104,6 @@ if st.button("Fetch Data"):
     # Display image
     st.image(image_url, caption=f"Image of {selected_body}", use_container_width=True)
 
-    # JavaScript to enable clipboard copying
-    st.markdown("""
-        <script>
-        function copyToClipboard(value) {
-            navigator.clipboard.writeText(value);
-            alert("Copied: " + value);
-        }
-        </script>
-    """, unsafe_allow_html=True)
-
     # Display planetary data with copy buttons
     for key, (value, unit) in planetary_data.items():
         col1, col2 = st.columns([3, 1])
@@ -126,8 +116,10 @@ if st.button("Fetch Data"):
         if value is not None:
             long_form_value = format_long_form(value)
 
-            # Button triggers JavaScript function to copy value
-            button_html = f"""
-            <button onclick="copyToClipboard('{long_form_value}')">📋 Copy {key}</button>
+            # Copy button using Streamlit's HTML workaround
+            copy_button_html = f"""
+            <button onclick="navigator.clipboard.writeText('{long_form_value}'); alert('Copied: {long_form_value}')">
+                📋 Copy {key}
+            </button>
             """
-            col2.markdown(button_html, unsafe_allow_html=True)
+            col2.markdown(copy_button_html, unsafe_allow_html=True)
