@@ -11,6 +11,7 @@ solar_system_api = "https://api.le-systeme-solaire.net/rest/bodies/"
 
 # Dictionary of known celestial bodies with their API identifiers
 horizons_bodies = {
+    # Planets
     "Mercury": "mercure",
     "Venus": "venus",
     "Earth": "terre",
@@ -20,12 +21,58 @@ horizons_bodies = {
     "Uranus": "uranus",
     "Neptune": "neptune",
     "Pluto": "pluton",
+
+    # Dwarf Planets
+    "Ceres": "ceres",
+    "Eris": "eris",
+    "Haumea": "haumea",
+    "Makemake": "makemake",
+
+    # Moons
     "Moon": "lune",
     "Europa": "europa",
-    "Titan": "titan"
+    "Ganymede": "ganymede",
+    "Callisto": "callisto",
+    "Io": "io",
+    "Triton": "triton",
+    "Enceladus": "enceladus",
+    "Titan": "titan",
+
+    # Asteroids
+    "Vesta": "vesta",
+    "Pallas": "pallas",
+    "Hygiea": "hygiea"
 }
 
-# Celestial Symbols
+# Categories for celestial objects
+object_categories = {
+    "Mercury": "Planet",
+    "Venus": "Planet",
+    "Earth": "Planet",
+    "Mars": "Planet",
+    "Jupiter": "Planet",
+    "Saturn": "Planet",
+    "Uranus": "Planet",
+    "Neptune": "Planet",
+    "Pluto": "Dwarf Planet",
+    "Ceres": "Dwarf Planet",
+    "Eris": "Dwarf Planet",
+    "Haumea": "Dwarf Planet",
+    "Makemake": "Dwarf Planet",
+    "Moon": "Planetary Satellite (Moon)",
+    "Europa": "Planetary Satellite (Moon)",
+    "Ganymede": "Planetary Satellite (Moon)",
+    "Callisto": "Planetary Satellite (Moon)",
+    "Io": "Planetary Satellite (Moon)",
+    "Triton": "Planetary Satellite (Moon)",
+    "Enceladus": "Planetary Satellite (Moon)",
+    "Titan": "Planetary Satellite (Moon)",
+    "Vesta": "Asteroid",
+    "Pallas": "Asteroid",
+    "Hygiea": "Asteroid"
+}
+
+# Celestial Symbols (for planets and major bodies)
 celestial_symbols = {
     "Mercury": "☿",
     "Venus": "♀",
@@ -52,29 +99,21 @@ wikipedia_gifs = {
     "Uranus": "https://upload.wikimedia.org/wikipedia/commons/2/20/Uranus_orientation_1985-2030.gif",
     "Neptune": "https://upload.wikimedia.org/wikipedia/commons/6/6d/Neptune.gif",
     "Pluto": "https://upload.wikimedia.org/wikipedia/commons/f/f9/Pluto_rotation_movie.gif",
-    "Moon": "https://upload.wikimedia.org/wikipedia/commons/c/c0/Lunar_libration_with_phase2.gif",
-    "Europa": "https://upload.wikimedia.org/wikipedia/commons/2/2d/Europa-rotationmovie.gif",
-    "Titan": "https://upload.wikimedia.org/wikipedia/commons/e/e2/PIA02146.gif"
+    "Moon": "https://upload.wikimedia.org/wikipedia/commons/c/c0/Lunar_libration_with_phase2.gif"
 }
 
 # Function to get planetary data
 def get_planetary_data(body_name):
-    """Fetch planetary data from Le Systeme Solaire API and ensure correct unit conversions."""
     response = requests.get(f"{solar_system_api}{body_name}")
-
     if response.status_code != 200:
         return {}
 
     data = response.json()
     
-    # Extract relevant fields, ensuring correct unit conversions
     mass = data.get("mass", {}).get("massValue", None) * 10**data.get("mass", {}).get("massExponent", 0) if data.get("mass") else None
-    radius = data.get("meanRadius", None) * 1000 if data.get("meanRadius") else None  # Convert km to meters
-    
-    # Calculate Surface Gravity g = GM/R^2
+    radius = data.get("meanRadius", None) * 1000 if data.get("meanRadius") else None
+
     surface_gravity = (G * mass / radius**2) if (mass and radius) else None
-    
-    # Calculate Escape Velocity sqrt(2GM/R)
     escape_velocity = np.sqrt(2 * G * mass / radius) if (mass and radius) else None
 
     extracted_data = {
@@ -86,56 +125,29 @@ def get_planetary_data(body_name):
         "Surface Gravity (m/s^2)": surface_gravity,
         "Escape Velocity (m/s)": escape_velocity
     }
-
     return extracted_data
-
-# Format values for LaTeX
-def format_value(name, value, unit=""):
-    """Formats numerical values using LaTeX scientific notation, with standard notation for -2 ≤ exponent ≤ 2."""
-    if value is None:
-        return rf"{name} = \text{{Unknown}}"
-    
-    exponent = int(np.floor(np.log10(abs(value)))) if value != 0 else 0
-    base = value / (10**exponent)
-
-    # If exponent is between -2 and 2, display in standard notation
-    if -2 <= exponent <= 2:
-        return rf"{name} = {value:.3f} \, {unit}"
-    
-    return rf"{name} = {base:.3f} \times 10^{{{exponent}}} \, {unit}"
 
 # Streamlit UI
 st.title("Celestial Mechanics Simulator")
 
-# Selection of Solar System bodies
 selected_body = st.selectbox("Select a Celestial Body", list(horizons_bodies.keys()))
 
 if st.button("Fetch Data"):
+    category = object_categories[selected_body]
     body_id = horizons_bodies[selected_body]
     planetary_data = get_planetary_data(body_id)
 
-    st.subheader("Extracted Data:")
-    formatted_latex = [
-        format_value(r"\text{Mass}", planetary_data.get("Mass (kg)"), "kg"),
-        format_value(r"\text{Sidereal Orbital Period}", planetary_data.get("Sidereal Orbital Period (s)"), "s"),
-        format_value(r"\text{Mean Radius}", planetary_data.get("Mean Radius (m)"), "m"),
-        format_value(r"\text{Mean Solar Day}", planetary_data.get("Mean Solar Day (s)"), "s"),
-        format_value(r"\text{Distance from Sun}", planetary_data.get("Distance from Sun (m)"), "m"),
-        format_value(r"\text{Surface Gravity}", planetary_data.get("Surface Gravity (m/s^2)"), "m/s^2"),
-        format_value(r"\text{Escape Velocity}", planetary_data.get("Escape Velocity (m/s)"), "m/s"),
-    ]
+    st.subheader(f"Category: **{category}**")
+    
+    for key, value in planetary_data.items():
+        if value is not None:
+            st.latex(f"{key} = {value:.3e}")
+        else:
+            st.latex(f"{key} = \\text{{Unknown}}")
 
-    for latex_string in formatted_latex:
-        st.latex(latex_string)
-
-    # Display the celestial symbol, now even larger
     symbol = celestial_symbols.get(selected_body, "N/A")
-    st.markdown(
-        f"<div style='text-align: center; font-size: 140px;'>{symbol}</div>", 
-        unsafe_allow_html=True
-    )
+    st.markdown(f"<div style='text-align: center; font-size: 140px;'>{symbol}</div>", unsafe_allow_html=True)
 
-    # Display the Wikipedia GIF for the celestial body
     image_url = wikipedia_gifs.get(selected_body, "")
     if image_url:
         st.image(image_url, caption=f"Rotating Image of {selected_body}", use_container_width=True)
