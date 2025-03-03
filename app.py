@@ -38,20 +38,26 @@ def get_horizons_data(body_id):
     result_text = data["result"]
 
     def extract_value(label, unit_conversion=1):
-        """Extract numerical values from the text response."""
-        match = re.search(rf"{label}\s*=\s*([\d\.\+\-e]+)", result_text)
+        """Extract numerical values from the text response, handling variations in formatting."""
+        pattern = rf"{label}\s*=\s*([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)"
+        match = re.search(pattern, result_text)
+        
         if match:
-            return float(match.group(1)) * unit_conversion
-        return "Unknown"
+            try:
+                return float(match.group(1)) * unit_conversion
+            except ValueError:
+                return "Unknown"  # If conversion fails, return "Unknown"
+        
+        return "Unknown"  # If no match is found
 
     extracted_data = {
-        "Mass (kg)": extract_value("Mass x10\\^24", 1e24),
-        "Orbital Speed (m/s)": extract_value("Orbital speed, km/s", 1000),
-        "Sidereal Orbital Period (s)": extract_value("Sidereal orb period", 86400),
-        "Escape Velocity (m/s)": extract_value("Escape velocity", 1000),
-        "Mean Radius (m)": extract_value("Vol. Mean Radius \\(km\\)", 1000),
-        "Mean Solar Day (s)": extract_value("Mean solar day", 1),
-        "Distance from Sun (m)": extract_value("Hill's sphere radius", AU_TO_METERS),
+        "Mass (kg)": extract_value(r"Mass x10\^24", 1e24),
+        "Orbital Speed (m/s)": extract_value(r"Orbital speed, km/s", 1000),
+        "Sidereal Orbital Period (s)": extract_value(r"Sidereal orb period", 86400),
+        "Escape Velocity (m/s)": extract_value(r"Escape velocity", 1000),
+        "Mean Radius (m)": extract_value(r"Vol\. Mean Radius\s*\(km\)", 1000),
+        "Mean Solar Day (s)": extract_value(r"Mean solar day", 1),
+        "Distance from Sun (m)": extract_value(r"Hill's sphere radius", AU_TO_METERS),
     }
 
     return extracted_data
