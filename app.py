@@ -67,7 +67,7 @@ def get_planetary_data(body_name):
         "Mean Radius": (radius, "m"),
         "Mean Solar Day": (data.get("sideralRotation", None) * 86400 if data.get("sideralRotation") else None, "s"),
         "Distance from Sun": (data.get("semimajorAxis", None) * 1000 if data.get("semimajorAxis") else None, "m"),
-        "Surface Gravity": (surface_gravity, "m/s^2"),
+        "Surface Gravity": (surface_gravity, r"\text{m/s}^2"),
         "Escape Velocity": (escape_velocity, "m/s"),
     }
     
@@ -88,9 +88,9 @@ def format_value(name, value, unit):
 
     # If exponent is between -2 and 2, display in standard notation
     if -2 <= exponent <= 2:
-        return rf"\textbf{{{name}}}: {value:.3f} \quad \text{{{unit}}}"
+        return rf"\textbf{{{name}}}: {value:.3f} \quad {unit}"
     
-    return rf"\textbf{{{name}}}: {base:.3f} \times 10^{{{exponent}}} \quad \text{{{unit}}}"
+    return rf"\textbf{{{name}}}: {base:.3f} \times 10^{{{exponent}}} \quad {unit}"
 
 # Streamlit UI
 st.title("Celestial Mechanics Simulator")
