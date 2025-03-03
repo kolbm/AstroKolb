@@ -40,11 +40,21 @@ def get_planetary_data(body_name):
 
     data = response.json()
     
-    mass = data.get("mass", {}).get("massValue", None) * 10**data.get("mass", {}).get("massExponent", 0) if data.get("mass") else None
-    radius = data.get("meanRadius", None) * 1000 if data.get("meanRadius") else None
+    mass = None
+    if "mass" in data and data["mass"]:
+        mass = data["mass"].get("massValue", None)
+        if mass is not None:
+            mass *= 10 ** data["mass"].get("massExponent", 0)
 
-    surface_gravity = (G * mass / radius**2) if (mass and radius) else None
-    escape_velocity = np.sqrt(2 * G * mass / radius) if (mass and radius) else None
+    radius = data.get("meanRadius", None)
+    if radius is not None:
+        radius *= 1000  # Convert km to m
+
+    surface_gravity = None
+    escape_velocity = None
+    if mass is not None and radius is not None:
+        surface_gravity = G * mass / radius**2
+        escape_velocity = np.sqrt(2 * G * mass / radius)
 
     extracted_data = {
         "Mass": (mass, "kg"),
@@ -68,14 +78,17 @@ def format_value(name, value, unit):
     if value is None:
         return rf"\textbf{{{name}}}: \text{{Unknown}}"
 
-    exponent = int(np.floor(np.log10(abs(value)))) if value != 0 else 0
-    base = value / (10**exponent)
+    try:
+        exponent = int(np.floor(np.log10(abs(value)))) if value != 0 else 0
+        base = value / (10**exponent)
 
-    # If exponent is between -2 and 2, display in standard notation
-    if -2 <= exponent <= 2:
-        return rf"\textbf{{{name}}}: {value:.3f} \quad {unit}"
-    
-    return rf"\textbf{{{name}}}: {base:.3f} \times 10^{{{exponent}}} \quad {unit}"
+        # If exponent is between -2 and 2, display in standard notation
+        if -2 <= exponent <= 2:
+            return rf"\textbf{{{name}}}: {value:.3f} \quad {unit}"
+        
+        return rf"\textbf{{{name}}}: {base:.3f} \times 10^{{{exponent}}} \quad {unit}"
+    except:
+        return rf"\textbf{{{name}}}: \text{{Unknown}}"
 
 # Streamlit UI
 st.title("Celestial Mechanics Simulator")
@@ -106,10 +119,8 @@ if st.button("Fetch Data"):
         "Venus": "https://upload.wikimedia.org/wikipedia/commons/0/0e/Venus_Rotation_Movie.gif",
         "Earth": "https://upload.wikimedia.org/wikipedia/commons/3/32/Earth_rotation.gif",
         "Mars": "https://upload.wikimedia.org/wikipedia/commons/3/34/Spinning_Mars.gif",
-        "Jupiter": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Jupiter_rotation_over_3_hours_with_11_inch_telescope.gif/220px-Jupiter_rotation_over_3_hours_with_11_inch_telescope.gif",
+        "Jupiter": "https://upload.wikimedia.org/wikipedia/commons/6/6d/Neptune.gif",
         "Saturn": "https://upload.wikimedia.org/wikipedia/commons/f/fe/Saturnoppositions-animated.gif",
-        "Uranus": "https://upload.wikimedia.org/wikipedia/commons/2/20/Uranus_orientation_1985-2030.gif",
-        "Neptune": "https://upload.wikimedia.org/wikipedia/commons/6/6d/Neptune.gif",
         "Pluto": "https://upload.wikimedia.org/wikipedia/commons/f/f9/Pluto_rotation_movie.gif"
     }
 
