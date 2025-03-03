@@ -52,8 +52,15 @@ def get_exoplanet_data():
 
 def calculate_orbital_parameters(mass, semi_major_axis, eccentricity):
     """Calculate orbital properties based on UCM and UG."""
+    if mass is None or semi_major_axis is None:
+        return None, None, None, None  # Prevent NaN errors
+    
     GM = G * mass
     r = semi_major_axis * (1 - eccentricity)
+    
+    if r == 0:
+        return None, None, None, None
+
     orbital_velocity = np.sqrt(GM / r)
     centripetal_acceleration = orbital_velocity**2 / r
     escape_velocity = np.sqrt(2 * GM / r)
@@ -63,6 +70,10 @@ def calculate_orbital_parameters(mass, semi_major_axis, eccentricity):
 
 def plot_3d_orbit(semi_major_axis, eccentricity):
     """Plot a 3D orbit using Plotly."""
+    if semi_major_axis is None or semi_major_axis == 0:
+        st.error("Cannot plot orbit: missing or invalid semi-major axis.")
+        return None
+
     theta = np.linspace(0, 2*np.pi, 200)
     a = semi_major_axis
     b = a * np.sqrt(1 - eccentricity**2)  # Semi-minor axis
@@ -93,22 +104,34 @@ if mode == "Solar System Objects":
         data = get_horizons_data(body_id)
 
         if data:
-            try:
-                mass = float(data["result"]["GM"].split()[0]) / G  # Convert GM to mass
-                semi_major_axis = float(data["result"]["a"].split()[0]) * 1.496e+11  # AU to meters
-                eccentricity = float(data["result"]["e"].split()[0])
+            st.json(data)  # Debugging: Display raw API response
 
-                # Compute orbital parameters
+            try:
+                mass = None
+                if "GM" in data["result"]:
+                    try:
+                        gm_value = float(data["result"]["GM"].split()[0])  # Extract GM
+                        mass = gm_value / G  # Convert GM to mass
+                    except ValueError:
+                        st.error("Could not convert GM to mass.")
+                
+                semi_major_axis = float(data["result"].get("a", "1.0")) * 1.496e+11  # Convert AU to meters
+                eccentricity = float(data["result"].get("e", "0.0"))  # Default to circular orbit
+
+                if mass is None:
+                    st.error("Mass data not found.")
+                if semi_major_axis is None:
+                    st.error("Semi-major axis data not found.")
+
                 orbital_velocity, centripetal_acceleration, escape_velocity, orbital_period = calculate_orbital_parameters(mass, semi_major_axis, eccentricity)
 
-                # Display results
-                st.write(f"**Mass**: {mass:.2e} kg")
+                st.write(f"**Mass**: {mass:.2e} kg" if mass else "Mass unavailable")
                 st.write(f"**Semi-Major Axis**: {semi_major_axis:.2e} m")
                 st.write(f"**Eccentricity**: {eccentricity:.3f}")
-                st.write(f"**Orbital Velocity**: {orbital_velocity:.2f} m/s")
-                st.write(f"**Centripetal Acceleration**: {centripetal_acceleration:.2f} m/s²")
-                st.write(f"**Escape Velocity**: {escape_velocity:.2f} m/s")
-                st.write(f"**Orbital Period**: {orbital_period:.2f} s")
+                st.write(f"**Orbital Velocity**: {orbital_velocity:.2f} m/s" if orbital_velocity else "Unavailable")
+                st.write(f"**Centripetal Acceleration**: {centripetal_acceleration:.2f} m/s²" if centripetal_acceleration else "Unavailable")
+                st.write(f"**Escape Velocity**: {escape_velocity:.2f} m/s" if escape_velocity else "Unavailable")
+                st.write(f"**Orbital Period**: {orbital_period:.2f} s" if orbital_period else "Unavailable")
 
                 # 3D Visualization
                 st.subheader("3D Orbital Visualization")
@@ -128,13 +151,12 @@ elif mode == "Exoplanets":
             planet_data = next((p for p in exoplanets if p["pl_name"] == selected_exoplanet), None)
 
             if planet_data:
-                semi_major_axis = float(planet_data["pl_orbsmax"]) * 1.496e+11  # Convert AU to meters
-                mass = float(planet_data["pl_bmassj"]) * 1.898e27  # Convert Jupiter masses to kg
-                eccentricity = float(planet_data["pl_orbper"]) if "pl_orbper" in planet_data else 0.0
+                semi_major_axis = float(planet_data.get("pl_orbsmax", "1.0")) * 1.496e+11  # Convert AU to meters
+                mass = float(planet_data.get("pl_bmassj", "1.0")) * 1.898e27  # Convert Jupiter masses to kg
+                eccentricity = float(planet_data.get("pl_orbeccen", "0.0"))  # Default to circular orbit
 
                 orbital_velocity, centripetal_acceleration, escape_velocity, orbital_period = calculate_orbital_parameters(mass, semi_major_axis, eccentricity)
 
-                # Display results
                 st.write(f"**Mass**: {mass:.2e} kg")
                 st.write(f"**Semi-Major Axis**: {semi_major_axis:.2e} m")
                 st.write(f"**Eccentricity**: {eccentricity:.3f}")
