@@ -73,7 +73,7 @@ object_categories = {
     "Hygiea": "Asteroid"
 }
 
-# Celestial Symbols (for planets and major bodies)
+# Celestial Symbols
 celestial_symbols = {
     "Mercury": "☿",
     "Venus": "♀",
@@ -121,13 +121,13 @@ def get_planetary_data(body_name):
     escape_velocity = np.sqrt(2 * G * mass / radius) if (mass and radius) else None
 
     extracted_data = {
-        "Mass (kg)": mass,
-        "Sidereal Orbital Period (s)": data.get("sideralOrbit", None) * 86400 if data.get("sideralOrbit") else None,
-        "Mean Radius (m)": radius,
-        "Mean Solar Day (s)": data.get("sideralRotation", None) * 86400 if data.get("sideralRotation") else None,
-        "Distance from Sun (m)": data.get("semimajorAxis", None) * 1000 if data.get("semimajorAxis") else None,
-        "Surface Gravity (m/s²)": surface_gravity,
-        "Escape Velocity (m/s)": escape_velocity
+        "Mass": mass,
+        "Sidereal Orbital Period": data.get("sideralOrbit", None) * 86400 if data.get("sideralOrbit") else None,
+        "Mean Radius": radius,
+        "Mean Solar Day": data.get("sideralRotation", None) * 86400 if data.get("sideralRotation") else None,
+        "Distance from Sun": data.get("semimajorAxis", None) * 1000 if data.get("semimajorAxis") else None,
+        "Surface Gravity": surface_gravity,
+        "Escape Velocity": escape_velocity
     }
     return extracted_data
 
@@ -142,19 +142,18 @@ if st.button("Fetch Data"):
     planetary_data = get_planetary_data(body_id)
 
     st.subheader(f"Category: **{category}**")
-    
+
     for key, value in planetary_data.items():
-        label = key.replace("(", " (").replace(")", ")")  # Add spacing in labels
         if value is not None:
             exponent = int(np.floor(np.log10(abs(value)))) if value != 0 else 0
             base = value / (10**exponent)
 
             if -2 <= exponent <= 2:
-                st.latex(f"{label} = {value:.3f}")
+                st.latex(f"{value:.3f} \\quad \\text{{{key} }}")
             else:
-                st.latex(f"{label} = {base:.3f} \\times 10^{{{exponent}}}")
+                st.latex(f"{base:.3f} \\times 10^{{{exponent}}} \\quad \\text{{{key} }}")
         else:
-            st.latex(f"{label} = \\text{{Unknown}}")
+            st.latex(f"\\text{{Unknown}} \\quad \\text{{{key} }}")
 
     symbol = celestial_symbols.get(selected_body, random.choice(random_symbols))
     st.markdown(f"<div style='text-align: center; font-size: 140px;'>{symbol}</div>", unsafe_allow_html=True)
