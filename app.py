@@ -19,13 +19,6 @@ horizons_bodies = {
     "Vesta": "vesta", "Pallas": "pallas", "Hygiea": "hygiea"
 }
 
-# Celestial Symbols
-celestial_symbols = {
-    "Mercury": "☿", "Venus": "♀", "Earth": "⊕", "Mars": "♂",
-    "Jupiter": "♃", "Saturn": "♄", "Uranus": "♅", "Neptune": "♆",
-    "Pluto": "♇", "Moon": "☽", "Europa": "🜁", "Titan": "🜂"
-}
-
 # Parent body (for moons)
 moon_orbits = {
     "Moon": "Earth", "Europa": "Jupiter", "Ganymede": "Jupiter", "Callisto": "Jupiter",
@@ -69,7 +62,7 @@ def get_planetary_data(body_name):
         "Mean Radius": (radius, "m"),
         "Mean Solar Day": (data.get("sideralRotation", None) * 86400 if data.get("sideralRotation") else None, "s"),
         "Distance from Sun": (data.get("semimajorAxis", None) * 1000 if data.get("semimajorAxis") else None, "m"),
-        "Surface Gravity": (surface_gravity, r"\text{m/s}^2"),
+        "Surface Gravity": (surface_gravity, "m/s^2"),
         "Escape Velocity": (escape_velocity, "m/s"),
     }
     
@@ -77,24 +70,6 @@ def get_planetary_data(body_name):
     orbits_text = moon_orbits.get(body_name, None)
 
     return extracted_data, orbits_text
-
-# Format values for LaTeX
-def format_value(name, value, unit):
-    """Formats numerical values using LaTeX scientific notation, with standard notation for -2 ≤ exponent ≤ 2."""
-    if value is None:
-        return rf"\textbf{{{name}}}: \text{{Unknown}}"
-
-    try:
-        exponent = int(np.floor(np.log10(abs(value)))) if value != 0 else 0
-        base = value / (10**exponent)
-
-        # If exponent is between -2 and 2, display in standard notation
-        if -2 <= exponent <= 2:
-            return rf"\textbf{{{name}}}: {value:.3f} \quad {unit}"
-        
-        return rf"\textbf{{{name}}}: {base:.3f} \times 10^{{{exponent}}} \quad {unit}"
-    except:
-        return rf"\textbf{{{name}}}: \text{{Unknown}}"
 
 # Streamlit UI
 st.title("Celestial Mechanics Simulator")
@@ -108,17 +83,23 @@ if st.button("Fetch Data"):
     # Display centered and bold category title
     st.markdown(f"<h2 style='text-align: center;'><b>{selected_body}</b></h2>", unsafe_allow_html=True)
 
-    # Display celestial symbol
-    symbol = celestial_symbols.get(selected_body, random.choice(["🦄", "🐦‍🔥", "🦖", "🐲"]))
-    st.markdown(f"<div style='text-align: center; font-size: 140px;'>{symbol}</div>", unsafe_allow_html=True)
-
-    # Display planetary data
+    # Display planetary data with copy buttons
     for key, (value, unit) in planetary_data.items():
-        st.latex(format_value(key, value, unit))
+        col1, col2 = st.columns([3, 1])
+        
+        # Format the value for display
+        formatted_value = "Unknown" if value is None else f"{value:.3e}" if abs(value) >= 1e3 or abs(value) < 1e-3 else f"{value:.3f}"
+        
+        # Show value and unit
+        col1.markdown(f"**{key}:** {formatted_value} {unit}")
+        
+        # Show copy button (only if value exists)
+        if value is not None:
+            col2.button("📋 Copy", key=f"copy_{key}", on_click=lambda val=formatted_value: st.session_state.update({"clipboard": val}))
 
     # Display what the moon orbits (only if applicable)
     if orbits:
-        st.latex(rf"\textbf{{Orbits}}: \text{{{orbits}}}")
+        st.markdown(f"**Orbits:** {orbits}")
 
     # Display celestial image (if available)
     celestial_images = {
