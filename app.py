@@ -86,6 +86,13 @@ def format_value(name, value, unit):
     
     return rf"\textbf{{{name}}}: {base:.3f} \times 10^{{{exponent}}} \quad \text{{{unit}}}"
 
+# Convert value to long form for copying
+def format_long_form(value):
+    """Converts a value to long form (no scientific notation, full decimal expansion)."""
+    if value is None:
+        return ""
+    return f"{value:.10f}".rstrip("0").rstrip(".")  # Removes unnecessary trailing zeros
+
 # Streamlit UI
 st.title("Celestial Mechanics Simulator")
 
@@ -106,10 +113,10 @@ if st.button("Fetch Data"):
         formatted_value = format_value(key, value, unit)
         col1.latex(formatted_value)
 
-        # Standard form for copying
+        # Convert value for copying (long form)
         if value is not None:
-            standard_value = f"{value:.3e}" if abs(value) >= 1e3 or abs(value) < 1e-3 else f"{value:.3f}"
-            col2.text_input("", standard_value, key=f"copy_{key}")
+            long_form_value = format_long_form(value)
+            col2.text_input("", long_form_value, key=f"copy_{key}")
 
     # Display what the moon orbits (only if applicable)
     if orbits:
