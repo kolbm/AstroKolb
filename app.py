@@ -93,6 +93,10 @@ def format_value(name, value, unit=""):
     
     exponent = int(np.floor(np.log10(abs(value)))) if value != 0 else 0
     base = value / (10**exponent)
+
+    # Ensure Surface Gravity exponent isn't defaulting to 10^0
+    if name == r"\text{Surface Gravity}" and exponent == 0:
+        return rf"{name} = {base:.3f} \text{{ {unit} }}"
     
     return rf"{name} = {base:.3f} \times 10^{{{exponent}}} \text{{ {unit} }}"
 
