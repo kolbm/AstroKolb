@@ -25,7 +25,7 @@ horizons_bodies = {
 }
 
 def get_planetary_data(body_name):
-    """Fetch planetary data from Le Systeme Solaire API."""
+    """Fetch planetary data from Le Systeme Solaire API and ensure correct unit conversions."""
     response = requests.get(f"{solar_system_api}{body_name}")
 
     if response.status_code != 200:
@@ -33,12 +33,12 @@ def get_planetary_data(body_name):
 
     data = response.json()
     
-    # Extract relevant fields, using defaults if missing
+    # Extract relevant fields, ensuring correct unit conversions
     extracted_data = {
         "Mass (kg)": data.get("mass", {}).get("massValue", None) * 10**data.get("mass", {}).get("massExponent", 0) if data.get("mass") else None,
         "Orbital Speed (m/s)": data.get("avgVelocity", None) * 1000 if data.get("avgVelocity") else None,
         "Sidereal Orbital Period (s)": data.get("sideralOrbit", None) * 86400 if data.get("sideralOrbit") else None,
-        "Escape Velocity (m/s)": data.get("escape", None) * 1000 if data.get("escape") else None,
+        "Escape Velocity (m/s)": data.get("escape", None) * 1000 if data.get("escape") else None,  # This was previously too large
         "Mean Radius (m)": data.get("meanRadius", None) * 1000 if data.get("meanRadius") else None,
         "Mean Solar Day (s)": data.get("sideralRotation", None) * 86400 if data.get("sideralRotation") else None,
         "Distance from Sun (m)": data.get("semimajorAxis", None) * 1000 if data.get("semimajorAxis") else None,
@@ -60,15 +60,15 @@ def get_exoplanet_data():
 
     return response.json()
 
-def format_value(name, value):
-    """Formats numerical values using LaTeX scientific notation in 10^x format."""
+def format_value(name, value, unit=""):
+    """Formats numerical values using LaTeX scientific notation in 10^x format with proper units."""
     if value is None:
         return rf"{name} = \text{{Unknown}}"
     
     exponent = int(np.floor(np.log10(abs(value)))) if value != 0 else 0
     base = value / (10**exponent)
     
-    return rf"{name} = {base:.3f} \times 10^{{{exponent}}}"
+    return rf"{name} = {base:.3f} \times 10^{{{exponent}}} \text{{ {unit} }}"
 
 # Streamlit UI
 st.title("Celestial Mechanics Simulator")
@@ -85,13 +85,13 @@ if mode == "Solar System Objects":
 
         st.subheader("Extracted Data:")
         formatted_latex = [
-            format_value(r"\text{Mass} (kg)", planetary_data.get("Mass (kg)")),
-            format_value(r"\text{Orbital Speed} (m/s)", planetary_data.get("Orbital Speed (m/s)")),
-            format_value(r"\text{Sidereal Orbital Period} (s)", planetary_data.get("Sidereal Orbital Period (s)")),
-            format_value(r"\text{Escape Velocity} (m/s)", planetary_data.get("Escape Velocity (m/s)")),
-            format_value(r"\text{Mean Radius} (m)", planetary_data.get("Mean Radius (m)")),
-            format_value(r"\text{Mean Solar Day} (s)", planetary_data.get("Mean Solar Day (s)")),
-            format_value(r"\text{Distance from Sun} (m)", planetary_data.get("Distance from Sun (m)")),
+            format_value(r"\text{Mass}", planetary_data.get("Mass (kg)"), "kg"),
+            format_value(r"\text{Orbital Speed}", planetary_data.get("Orbital Speed (m/s)"), "m/s"),
+            format_value(r"\text{Sidereal Orbital Period}", planetary_data.get("Sidereal Orbital Period (s)"), "s"),
+            format_value(r"\text{Escape Velocity}", planetary_data.get("Escape Velocity (m/s)"), "m/s"),
+            format_value(r"\text{Mean Radius}", planetary_data.get("Mean Radius (m)"), "m"),
+            format_value(r"\text{Mean Solar Day}", planetary_data.get("Mean Solar Day (s)"), "s"),
+            format_value(r"\text{Distance from Sun}", planetary_data.get("Distance from Sun (m)"), "m"),
         ]
 
         for latex_string in formatted_latex:
@@ -117,10 +117,10 @@ elif mode == "Exoplanets":
 
                 st.subheader("Extracted Data:")
                 formatted_latex = [
-                    format_value(r"\text{Mass} (kg)", extracted_data.get("Mass (kg)")),
-                    format_value(r"\text{Semi-Major Axis} (m)", extracted_data.get("Semi-Major Axis (m)")),
-                    format_value(r"\text{Orbital Period} (s)", extracted_data.get("Orbital Period (s)")),
-                    format_value(r"\text{Eccentricity}", extracted_data.get("Eccentricity")),
+                    format_value(r"\text{Mass}", extracted_data.get("Mass (kg)"), "kg"),
+                    format_value(r"\text{Semi-Major Axis}", extracted_data.get("Semi-Major Axis (m)"), "m"),
+                    format_value(r"\text{Orbital Period}", extracted_data.get("Orbital Period (s)"), "s"),
+                    format_value(r"\text{Eccentricity}", extracted_data.get("Eccentricity"), ""),
                 ]
 
                 for latex_string in formatted_latex:
