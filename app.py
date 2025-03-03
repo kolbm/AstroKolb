@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 import numpy as np
+import random
 
 # Constants
 G = 6.674e-11  # Gravitational constant (m³/kg/s²)
@@ -88,6 +89,9 @@ celestial_symbols = {
     "Titan": "🜂"
 }
 
+# Random symbols for celestial bodies with no official symbol
+random_symbols = ["🦄", "🐦‍🔥", "🦖", "🐲"]
+
 # Wikipedia GIFs for Solar System Objects
 wikipedia_gifs = {
     "Mercury": "https://upload.wikimedia.org/wikipedia/commons/d/d0/Mercury.gif",
@@ -122,7 +126,7 @@ def get_planetary_data(body_name):
         "Mean Radius (m)": radius,
         "Mean Solar Day (s)": data.get("sideralRotation", None) * 86400 if data.get("sideralRotation") else None,
         "Distance from Sun (m)": data.get("semimajorAxis", None) * 1000 if data.get("semimajorAxis") else None,
-        "Surface Gravity (m/s^2)": surface_gravity,
+        "Surface Gravity (m/s²)": surface_gravity,
         "Escape Velocity (m/s)": escape_velocity
     }
     return extracted_data
@@ -140,12 +144,19 @@ if st.button("Fetch Data"):
     st.subheader(f"Category: **{category}**")
     
     for key, value in planetary_data.items():
+        label = key.replace("(", " (").replace(")", ")")  # Add spacing in labels
         if value is not None:
-            st.latex(f"{key} = {value:.3e}")
-        else:
-            st.latex(f"{key} = \\text{{Unknown}}")
+            exponent = int(np.floor(np.log10(abs(value)))) if value != 0 else 0
+            base = value / (10**exponent)
 
-    symbol = celestial_symbols.get(selected_body, "N/A")
+            if -2 <= exponent <= 2:
+                st.latex(f"{label} = {value:.3f}")
+            else:
+                st.latex(f"{label} = {base:.3f} \\times 10^{{{exponent}}}")
+        else:
+            st.latex(f"{label} = \\text{{Unknown}}")
+
+    symbol = celestial_symbols.get(selected_body, random.choice(random_symbols))
     st.markdown(f"<div style='text-align: center; font-size: 140px;'>{symbol}</div>", unsafe_allow_html=True)
 
     image_url = wikipedia_gifs.get(selected_body, "")
