@@ -32,6 +32,12 @@ object_categories = {
     "Hygiea": "Asteroid"
 }
 
+# Parent body (for moons)
+moon_orbits = {
+    "Moon": "Earth", "Europa": "Jupiter", "Ganymede": "Jupiter", "Callisto": "Jupiter",
+    "Io": "Jupiter", "Triton": "Neptune", "Enceladus": "Saturn", "Titan": "Saturn"
+}
+
 # Celestial Symbols
 celestial_symbols = {
     "Mercury": "☿", "Venus": "♀", "Earth": "⊕", "Mars": "♂",
@@ -63,15 +69,20 @@ def get_planetary_data(body_name):
         "Mean Solar Day": (data.get("sideralRotation", None) * 86400 if data.get("sideralRotation") else None, "s"),
         "Distance from Sun": (data.get("semimajorAxis", None) * 1000 if data.get("semimajorAxis") else None, "m"),
         "Surface Gravity": (surface_gravity, "m/s^2"),
-        "Escape Velocity": (escape_velocity, "m/s")
+        "Escape Velocity": (escape_velocity, "m/s"),
     }
+    
+    # If the object is a moon, add information about its parent planet
+    if body_name in moon_orbits:
+        extracted_data["Orbits"] = (moon_orbits[body_name], "")
+
     return extracted_data
 
 # Format values for LaTeX
 def format_value(name, value, unit):
     """Formats numerical values using LaTeX scientific notation, with standard notation for -2 ≤ exponent ≤ 2."""
     if value is None:
-        return rf"\text{{{name}}} = \text{{Unknown}}"
+        return rf"\text{{{name}}}: \text{{Unknown}}"
 
     exponent = int(np.floor(np.log10(abs(value)))) if value != 0 else 0
     base = value / (10**exponent)
@@ -97,5 +108,6 @@ if st.button("Fetch Data"):
     for key, (value, unit) in planetary_data.items():
         st.latex(format_value(key, value, unit))
 
+    # Display celestial symbol, or a random one if missing
     symbol = celestial_symbols.get(selected_body, random.choice(random_symbols))
     st.markdown(f"<div style='text-align: center; font-size: 140px;'>{symbol}</div>", unsafe_allow_html=True)
