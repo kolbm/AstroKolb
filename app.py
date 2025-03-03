@@ -59,7 +59,7 @@ def get_planetary_data(body_name):
         "Mean Radius (m)": data.get("meanRadius", None) * 1000 if data.get("meanRadius") else None,
         "Mean Solar Day (s)": data.get("sideralRotation", None) * 86400 if data.get("sideralRotation") else None,
         "Distance from Sun (m)": data.get("semimajorAxis", None) * 1000 if data.get("semimajorAxis") else None,
-        "Image": f"https://solarsystem.nasa.gov/system/feature_items/images/{body_name}.jpg"
+        "Image": f"https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/{body_name.capitalize()}_by_Cassini.jpg/400px-{body_name.capitalize()}_by_Cassini.jpg"
     }
 
     return extracted_data
@@ -121,7 +121,7 @@ if mode == "Solar System Objects":
         # Display the image of the celestial body
         image_url = planetary_data.get("Image", "")
         if image_url:
-            st.image(image_url, caption=f"Image of {selected_body}", use_column_width=True)
+            st.image(image_url, caption=f"Image of {selected_body}", use_container_width=True)
 
 elif mode == "Exoplanets":
     exoplanets = get_exoplanet_data()
