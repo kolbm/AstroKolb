@@ -68,12 +68,19 @@ def get_planetary_data(body_name):
     data = response.json()
     
     # Extract relevant fields, ensuring correct unit conversions
+    mass = data.get("mass", {}).get("massValue", None) * 10**data.get("mass", {}).get("massExponent", 0) if data.get("mass") else None
+    radius = data.get("meanRadius", None) * 1000 if data.get("meanRadius") else None  # Convert km to meters
+    
+    # Calculate Surface Gravity g = G * M / R^2
+    surface_gravity = (G * mass / radius**2) if (mass and radius) else None
+
     extracted_data = {
-        "Mass (kg)": data.get("mass", {}).get("massValue", None) * 10**data.get("mass", {}).get("massExponent", 0) if data.get("mass") else None,
+        "Mass (kg)": mass,
         "Sidereal Orbital Period (s)": data.get("sideralOrbit", None) * 86400 if data.get("sideralOrbit") else None,
-        "Mean Radius (m)": data.get("meanRadius", None) * 1000 if data.get("meanRadius") else None,
+        "Mean Radius (m)": radius,
         "Mean Solar Day (s)": data.get("sideralRotation", None) * 86400 if data.get("sideralRotation") else None,
         "Distance from Sun (m)": data.get("semimajorAxis", None) * 1000 if data.get("semimajorAxis") else None,
+        "Surface Gravity (m/s^2)": surface_gravity,
     }
 
     return extracted_data
@@ -106,14 +113,18 @@ if st.button("Fetch Data"):
         format_value(r"\text{Mean Radius}", planetary_data.get("Mean Radius (m)"), "m"),
         format_value(r"\text{Mean Solar Day}", planetary_data.get("Mean Solar Day (s)"), "s"),
         format_value(r"\text{Distance from Sun}", planetary_data.get("Distance from Sun (m)"), "m"),
+        format_value(r"\text{Surface Gravity}", planetary_data.get("Surface Gravity (m/s^2)"), "m/s^2"),
     ]
 
     for latex_string in formatted_latex:
         st.latex(latex_string)
 
-    # Display the celestial symbol if available
+    # Display the celestial symbol, centered and enlarged
     symbol = celestial_symbols.get(selected_body, "N/A")
-    st.markdown(f"### **Celestial Symbol: {symbol}**")
+    st.markdown(
+        f"<div style='text-align: center; font-size: 80px;'>{symbol}</div>", 
+        unsafe_allow_html=True
+    )
 
     # Display the Wikipedia GIF for the celestial body
     image_url = wikipedia_gifs.get(selected_body, "")
