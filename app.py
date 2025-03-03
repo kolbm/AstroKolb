@@ -1,63 +1,48 @@
 import streamlit as st
 import requests
 import numpy as np
-import re
 import plotly.graph_objects as go
 
 # Constants
 G = 6.674e-11  # Gravitational constant (m³/kg/s²)
-AU_TO_METERS = 1.496e+11  # 1 AU to meters
+AU_TO_METERS = 1.496e+11  # Convert AU to meters
 
-# Dictionary of known celestial bodies with NASA Horizons API IDs
+# Dictionary of known celestial bodies with their API identifiers
+solar_system_api = "https://api.le-systeme-solaire.net/rest/bodies/"
 horizons_bodies = {
-    "Earth": "399",
-    "Moon": "301",
-    "Mars": "499",
-    "Jupiter": "599",
-    "Europa": "502",
-    "Titan": "606",
-    "Pluto": "999"
+    "Mercury": "mercure",
+    "Venus": "venus",
+    "Earth": "terre",
+    "Mars": "mars",
+    "Jupiter": "jupiter",
+    "Saturn": "saturne",
+    "Uranus": "uranus",
+    "Neptune": "neptune",
+    "Pluto": "pluton",
+    "Moon": "lune",
+    "Europa": "europa",
+    "Titan": "titan"
 }
 
-def get_horizons_data(body_id):
-    """Fetch orbital data from NASA Horizons API and correctly parse the text response."""
-    API_URL = "https://ssd.jpl.nasa.gov/api/horizons.api"
-    params = {"format": "json", "COMMAND": body_id, "OBJ_DATA": "YES"}
-
-    response = requests.get(API_URL, params=params)
+def get_planetary_data(body_name):
+    """Fetch planetary data from Le Systeme Solaire API."""
+    response = requests.get(f"{solar_system_api}{body_name}")
+    
     if response.status_code != 200:
-        st.error(f"Failed to retrieve data from NASA Horizons. HTTP Status: {response.status_code}")
+        st.error(f"Failed to retrieve planetary data. HTTP Status: {response.status_code}")
         return None
 
     data = response.json()
-    if "result" not in data:
-        st.error("Invalid API response: 'result' key missing.")
-        st.json(data)  # Debugging output
-        return None
-
-    result_text = data["result"]
-
-    def extract_value(label, unit_conversion=1):
-        """Extract numerical values from the text response, handling variations in formatting."""
-        pattern = rf"{label}\s*=\s*([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)"
-        match = re.search(pattern, result_text)
-        
-        if match:
-            try:
-                return float(match.group(1)) * unit_conversion
-            except ValueError:
-                return "Unknown"  # If conversion fails, return "Unknown"
-        
-        return "Unknown"  # If no match is found
-
+    
+    # Extract the relevant fields
     extracted_data = {
-        "Mass (kg)": extract_value(r"Mass x10\^24", 1e24),
-        "Orbital Speed (m/s)": extract_value(r"Orbital speed, km/s", 1000),
-        "Sidereal Orbital Period (s)": extract_value(r"Sidereal orb period", 86400),
-        "Escape Velocity (m/s)": extract_value(r"Escape velocity", 1000),
-        "Mean Radius (m)": extract_value(r"Vol\. Mean Radius\s*\(km\)", 1000),
-        "Mean Solar Day (s)": extract_value(r"Mean solar day", 1),
-        "Distance from Sun (m)": extract_value(r"Hill's sphere radius", AU_TO_METERS),
+        "Mass (kg)": data.get("mass", {}).get("massValue", "Unknown") * 10**data.get("mass", {}).get("massExponent", 0),
+        "Orbital Speed (m/s)": data.get("avgVelocity", "Unknown") * 1000,  # Convert from km/s
+        "Sidereal Orbital Period (s)": data.get("sideralOrbit", "Unknown") * 86400,  # Convert from days
+        "Escape Velocity (m/s)": data.get("escape", "Unknown") * 1000,  # Convert from km/s
+        "Mean Radius (m)": data.get("meanRadius", "Unknown") * 1000,  # Convert from km
+        "Mean Solar Day (s)": data.get("sideralRotation", "Unknown") * 86400,  # Convert from days
+        "Distance from Sun (m)": data.get("semimajorAxis", "Unknown") * 1000,  # Convert from km
     }
 
     return extracted_data
@@ -76,24 +61,6 @@ def get_exoplanet_data():
         return None
 
     return response.json()
-
-def calculate_orbital_parameters(mass, semi_major_axis, eccentricity):
-    """Calculate orbital properties based on UCM and UG."""
-    if mass == "Unknown" or semi_major_axis == "Unknown":
-        return "Unknown", "Unknown", "Unknown", "Unknown"
-
-    GM = G * mass
-    r = semi_major_axis * (1 - eccentricity)
-
-    if r == 0:
-        return "Unknown", "Unknown", "Unknown", "Unknown"
-
-    orbital_velocity = np.sqrt(GM / r)
-    centripetal_acceleration = orbital_velocity**2 / r
-    escape_velocity = np.sqrt(2 * GM / r)
-    orbital_period = 2 * np.pi * np.sqrt(semi_major_axis**3 / GM)
-
-    return orbital_velocity, centripetal_acceleration, escape_velocity, orbital_period
 
 def plot_3d_orbit(semi_major_axis, eccentricity):
     """Plot a 3D orbit using Plotly."""
@@ -128,7 +95,7 @@ if mode == "Solar System Objects":
 
     if st.button("Fetch Data"):
         body_id = horizons_bodies[selected_body]
-        extracted_data = get_horizons_data(body_id)
+        extracted_data = get_planetary_data(body_id)
 
         if extracted_data:
             st.subheader("Extracted Data:")
