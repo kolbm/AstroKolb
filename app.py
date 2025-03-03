@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 import numpy as np
+import pyperclip  # Python library to handle clipboard copying
 
 # Constants
 G = 6.674e-11  # Gravitational constant (m³/kg/s²)
@@ -104,16 +105,6 @@ if st.button("Fetch Data"):
     # Display image
     st.image(image_url, caption=f"Image of {selected_body}", use_container_width=True)
 
-    # JavaScript to enable clipboard copying
-    st.markdown("""
-        <script>
-        function copyToClipboard(value) {
-            navigator.clipboard.writeText(value);
-            alert("Copied: " + value);
-        }
-        </script>
-    """, unsafe_allow_html=True)
-
     # Display planetary data with copy buttons
     for key, (value, unit) in planetary_data.items():
         col1, col2 = st.columns([3, 1])
@@ -126,10 +117,7 @@ if st.button("Fetch Data"):
         if value is not None:
             long_form_value = format_long_form(value)
 
-            # Button triggers JavaScript function to copy value
-            copy_button_html = f"""
-            <button onclick="copyToClipboard('{long_form_value}')">
-                📋 Copy {key}
-            </button>
-            """
-            col2.markdown(copy_button_html, unsafe_allow_html=True)
+            # Button copies value to clipboard
+            if col2.button(f"📋 Copy {key}", key=f"copy_{key}"):
+                pyperclip.copy(long_form_value)
+                st.success(f"Copied: {long_form_value}")
