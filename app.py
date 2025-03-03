@@ -91,16 +91,16 @@ def get_planetary_data(body_name):
 
 # Format values for LaTeX
 def format_value(name, value, unit=""):
-    """Formats numerical values using LaTeX scientific notation in 10^x format with proper units."""
+    """Formats numerical values using LaTeX scientific notation, with standard notation for -2 ≤ exponent ≤ 2."""
     if value is None:
         return rf"{name} = \text{{Unknown}}"
     
     exponent = int(np.floor(np.log10(abs(value)))) if value != 0 else 0
     base = value / (10**exponent)
 
-    # Remove exponent if it is 10^0
-    if exponent == 0:
-        return rf"{name} = {base:.3f} \text{{ {unit} }}"
+    # If exponent is between -2 and 2, display in standard notation
+    if -2 <= exponent <= 2:
+        return rf"{name} = {value:.3f} \text{{ {unit} }}"
     
     return rf"{name} = {base:.3f} \times 10^{{{exponent}}} \text{{ {unit} }}"
 
