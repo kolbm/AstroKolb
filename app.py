@@ -60,11 +60,11 @@ def get_exoplanet_data():
 
     return response.json()
 
-def format_value(value):
+def format_value(name, value):
     """Formats numerical values in scientific notation using LaTeX."""
     if value is None:
-        return r"\text{Unknown}"
-    return rf"$ {value:.3e} $"
+        return rf"{name} = \text{{Unknown}}"
+    return rf"{name} = {value:.3e}"
 
 # Streamlit UI
 st.title("Celestial Mechanics Simulator")
@@ -79,13 +79,19 @@ if mode == "Solar System Objects":
         body_id = horizons_bodies[selected_body]
         planetary_data = get_planetary_data(body_id)
 
-        # Ensure all values are formatted in LaTeX
-        cleaned_data = {key: format_value(planetary_data.get(key)) for key in planetary_data}
-
         st.subheader("Extracted Data:")
-        for key, value in cleaned_data.items():
-            key_latex = key.replace(" ", r"\ ")
-            st.latex(rf"{key_latex} = {value}")
+        formatted_latex = [
+            format_value(r"\text{Mass} (kg)", planetary_data.get("Mass (kg)")),
+            format_value(r"\text{Orbital Speed} (m/s)", planetary_data.get("Orbital Speed (m/s)")),
+            format_value(r"\text{Sidereal Orbital Period} (s)", planetary_data.get("Sidereal Orbital Period (s)")),
+            format_value(r"\text{Escape Velocity} (m/s)", planetary_data.get("Escape Velocity (m/s)")),
+            format_value(r"\text{Mean Radius} (m)", planetary_data.get("Mean Radius (m)")),
+            format_value(r"\text{Mean Solar Day} (s)", planetary_data.get("Mean Solar Day (s)")),
+            format_value(r"\text{Distance from Sun} (m)", planetary_data.get("Distance from Sun (m)")),
+        ]
+
+        for latex_string in formatted_latex:
+            st.latex(latex_string)
 
 elif mode == "Exoplanets":
     exoplanets = get_exoplanet_data()
@@ -105,10 +111,13 @@ elif mode == "Exoplanets":
                     "Eccentricity": float(planet_data.get("pl_orbeccen", 0.0)),  # Default to circular orbit
                 }
 
-                # Ensure all values are formatted in LaTeX
-                cleaned_data = {key: format_value(extracted_data.get(key)) for key in extracted_data}
-
                 st.subheader("Extracted Data:")
-                for key, value in cleaned_data.items():
-                    key_latex = key.replace(" ", r"\ ")
-                    st.latex(rf"{key_latex} = {value}")
+                formatted_latex = [
+                    format_value(r"\text{Mass} (kg)", extracted_data.get("Mass (kg)")),
+                    format_value(r"\text{Semi-Major Axis} (m)", extracted_data.get("Semi-Major Axis (m)")),
+                    format_value(r"\text{Orbital Period} (s)", extracted_data.get("Orbital Period (s)")),
+                    format_value(r"\text{Eccentricity}", extracted_data.get("Eccentricity")),
+                ]
+
+                for latex_string in formatted_latex:
+                    st.latex(latex_string)
