@@ -116,10 +116,5 @@ if st.button("Fetch Data"):
         if value is not None:
             long_form_value = format_long_form(value)
 
-            # Copy button using Streamlit's HTML workaround
-            copy_button_html = f"""
-            <button onclick="navigator.clipboard.writeText('{long_form_value}'); alert('Copied: {long_form_value}')">
-                📋 Copy {key}
-            </button>
-            """
-            col2.markdown(copy_button_html, unsafe_allow_html=True)
+            # Create a text input field with the value for easy copying
+            col2.text_input(f"Copy {key}", long_form_value, key=f"copy_{key}")
