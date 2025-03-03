@@ -24,11 +24,10 @@ object_categories = {
     "Mercury": "Planet", "Venus": "Planet", "Earth": "Planet", "Mars": "Planet",
     "Jupiter": "Planet", "Saturn": "Planet", "Uranus": "Planet", "Neptune": "Planet",
     "Pluto": "Dwarf Planet", "Ceres": "Dwarf Planet", "Eris": "Dwarf Planet",
-    "Haumea": "Dwarf Planet", "Makemake": "Dwarf Planet", "Moon": "Planetary Satellite (Moon)",
-    "Europa": "Planetary Satellite (Moon)", "Ganymede": "Planetary Satellite (Moon)",
-    "Callisto": "Planetary Satellite (Moon)", "Io": "Planetary Satellite (Moon)",
-    "Triton": "Planetary Satellite (Moon)", "Enceladus": "Planetary Satellite (Moon)",
-    "Titan": "Planetary Satellite (Moon)", "Vesta": "Asteroid", "Pallas": "Asteroid",
+    "Haumea": "Dwarf Planet", "Makemake": "Dwarf Planet", "Moon": "Moon",
+    "Europa": "Moon", "Ganymede": "Moon", "Callisto": "Moon",
+    "Io": "Moon", "Triton": "Moon", "Enceladus": "Moon",
+    "Titan": "Moon", "Vesta": "Asteroid", "Pallas": "Asteroid",
     "Hygiea": "Asteroid"
 }
 
@@ -103,10 +102,15 @@ if st.button("Fetch Data"):
     body_id = horizons_bodies[selected_body]
     planetary_data = get_planetary_data(body_id)
 
+    # Display correct category (Moons now just say "Moon")
     st.subheader(f"Category: **{category}**")
 
     for key, (value, unit) in planetary_data.items():
         st.latex(format_value(key, value, unit))
+
+    # Display what the moon orbits
+    if selected_body in moon_orbits:
+        st.latex(rf"\text{{Orbits}}: \text{{{moon_orbits[selected_body]}}}")
 
     # Display celestial symbol, or a random one if missing
     symbol = celestial_symbols.get(selected_body, random.choice(random_symbols))
