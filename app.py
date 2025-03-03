@@ -8,15 +8,19 @@ G = 6.674e-11  # Gravitational constant (m³/kg/s²)
 # API endpoint for solar system objects
 solar_system_api = "https://api.le-systeme-solaire.net/rest/bodies/"
 
-# Dictionary of known celestial bodies and their symbols
+# Dictionary of known celestial bodies, symbols, and images
 horizons_bodies = {
-    "Mercury": ("mercure", "☿"), "Venus": ("venus", "♀"), "Earth": ("terre", "⊕"), "Mars": ("mars", "♂"),
-    "Jupiter": ("jupiter", "♃"), "Saturn": ("saturne", "♄"), "Uranus": ("uranus", "♅"), "Neptune": ("neptune", "♆"),
-    "Pluto": ("pluton", "♇"), "Ceres": ("ceres", "⚳"), "Eris": ("eris", "❄"), "Haumea": ("haumea", "💫"),
-    "Makemake": ("makemake", "🌍"), "Moon": ("lune", "☽"), "Europa": ("europa", "🜁"), 
-    "Ganymede": ("ganymede", "🜂"), "Callisto": ("callisto", "🜃"), "Io": ("io", "🔥"),
-    "Triton": ("triton", "🌊"), "Enceladus": ("enceladus", "🧊"), "Titan": ("titan", "🪐"),
-    "Vesta": ("vesta", "🌑"), "Pallas": ("pallas", "🌓"), "Hygiea": ("hygiea", "🌕")
+    "Mercury": ("mercure", "☿", "https://upload.wikimedia.org/wikipedia/commons/d/d0/Mercury.gif"),
+    "Venus": ("venus", "♀", "https://upload.wikimedia.org/wikipedia/commons/0/0e/Venus_Rotation_Movie.gif"),
+    "Earth": ("terre", "⊕", "https://upload.wikimedia.org/wikipedia/commons/3/32/Earth_rotation.gif"),
+    "Mars": ("mars", "♂", "https://upload.wikimedia.org/wikipedia/commons/3/34/Spinning_Mars.gif"),
+    "Jupiter": ("jupiter", "♃", "https://upload.wikimedia.org/wikipedia/commons/6/6d/Neptune.gif"),
+    "Saturn": ("saturne", "♄", "https://upload.wikimedia.org/wikipedia/commons/f/fe/Saturnoppositions-animated.gif"),
+    "Neptune": ("neptune", "♆", "https://upload.wikimedia.org/wikipedia/commons/6/6d/Neptune.gif"),
+    "Pluto": ("pluton", "♇", "https://upload.wikimedia.org/wikipedia/commons/f/f9/Pluto_rotation_movie.gif"),
+    "Moon": ("lune", "☽", "https://upload.wikimedia.org/wikipedia/commons/c/c0/Lunar_libration_with_phase2.gif"),
+    "Europa": ("europa", "🜁", "https://upload.wikimedia.org/wikipedia/commons/2/2d/Europa-rotationmovie.gif"),
+    "Titan": ("titan", "🪐", "https://upload.wikimedia.org/wikipedia/commons/e/e2/PIA02146.gif"),
 }
 
 # Function to get planetary data
@@ -94,8 +98,11 @@ if st.button("Fetch Data"):
     planetary_data = get_planetary_data(selected_body)
 
     # Display centered and bold category title with planetary symbol
-    symbol = horizons_bodies[selected_body][1]
+    symbol, image_url = horizons_bodies[selected_body][1], horizons_bodies[selected_body][2]
     st.markdown(f"<h2 style='text-align: center;'><b>{selected_body}</b> {symbol}</h2>", unsafe_allow_html=True)
+
+    # Display image
+    st.image(image_url, caption=f"Image of {selected_body}", use_column_width=True)
 
     # JavaScript to enable clipboard copying
     st.markdown("""
