@@ -1,7 +1,6 @@
 import streamlit as st
 import requests
 import numpy as np
-import plotly.graph_objects as go
 
 # Constants
 G = 6.674e-11  # Gravitational constant (m³/kg/s²)
@@ -22,6 +21,21 @@ horizons_bodies = {
     "Moon": "lune",
     "Europa": "europa",
     "Titan": "titan"
+}
+
+celestial_symbols = {
+    "Mercury": "☿",
+    "Venus": "♀",
+    "Earth": "⊕",
+    "Mars": "♂",
+    "Jupiter": "♃",
+    "Saturn": "♄",
+    "Uranus": "♅",
+    "Neptune": "♆",
+    "Pluto": "♇",
+    "Moon": "☽",
+    "Europa": "🜁",
+    "Titan": "🜂"
 }
 
 def get_planetary_data(body_name):
@@ -95,6 +109,10 @@ if mode == "Solar System Objects":
         for latex_string in formatted_latex:
             st.latex(latex_string)
 
+        # Display the celestial symbol if available
+        symbol = celestial_symbols.get(selected_body, "N/A")
+        st.markdown(f"### **Celestial Symbol: {symbol}**")
+
 elif mode == "Exoplanets":
     exoplanets = get_exoplanet_data()
 
@@ -123,3 +141,6 @@ elif mode == "Exoplanets":
 
                 for latex_string in formatted_latex:
                     st.latex(latex_string)
+
+                # No known symbols for exoplanets, so we display "N/A"
+                st.markdown("### **Celestial Symbol: N/A**")
