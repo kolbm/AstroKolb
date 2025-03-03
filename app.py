@@ -63,8 +63,8 @@ def get_exoplanet_data():
 def format_value(value):
     """Formats numerical values in scientific notation using LaTeX."""
     if value is None:
-        return "Unknown"
-    return f"$ {value:.3e} $"
+        return r"\text{Unknown}"
+    return rf"$ {value:.3e} $"
 
 # Streamlit UI
 st.title("Celestial Mechanics Simulator")
@@ -84,7 +84,7 @@ if mode == "Solar System Objects":
 
         st.subheader("Extracted Data:")
         for key, value in cleaned_data.items():
-            st.latex(f"{key.replace(' ', '_')} = {value}")
+            st.latex(rf"{key.replace(' ', '_')} = {value}")
 
 elif mode == "Exoplanets":
     exoplanets = get_exoplanet_data()
@@ -109,4 +109,4 @@ elif mode == "Exoplanets":
 
                 st.subheader("Extracted Data:")
                 for key, value in cleaned_data.items():
-                    st.latex(f"{key.replace(' ', '_')} = {value}")
+                    st.latex(rf"{key.replace(' ', '_')} = {value}")
