@@ -19,33 +19,33 @@ horizons_bodies = {
     "Vesta": "vesta", "Pallas": "pallas", "Hygiea": "hygiea"
 }
 
-# Categories for celestial objects
-object_categories = {
-    "Mercury": "Planet", "Venus": "Planet", "Earth": "Planet", "Mars": "Planet",
-    "Jupiter": "Planet", "Saturn": "Planet", "Uranus": "Planet", "Neptune": "Planet",
-    "Pluto": "Dwarf Planet", "Ceres": "Dwarf Planet", "Eris": "Dwarf Planet",
-    "Haumea": "Dwarf Planet", "Makemake": "Dwarf Planet", "Moon": "Moon",
-    "Europa": "Moon", "Ganymede": "Moon", "Callisto": "Moon",
-    "Io": "Moon", "Triton": "Moon", "Enceladus": "Moon",
-    "Titan": "Moon", "Vesta": "Asteroid", "Pallas": "Asteroid",
-    "Hygiea": "Asteroid"
+# Dictionary of celestial object images
+celestial_images = {
+    "Mercury": "https://upload.wikimedia.org/wikipedia/commons/d/d0/Mercury.gif",
+    "Venus": "https://upload.wikimedia.org/wikipedia/commons/0/0e/Venus_Rotation_Movie.gif",
+    "Earth": "https://upload.wikimedia.org/wikipedia/commons/3/32/Earth_rotation.gif",
+    "Mars": "https://upload.wikimedia.org/wikipedia/commons/3/34/Spinning_Mars.gif",
+    "Jupiter": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Jupiter_rotation_over_3_hours_with_11_inch_telescope.gif/220px-Jupiter_rotation_over_3_hours_with_11_inch_telescope.gif",
+    "Saturn": "https://upload.wikimedia.org/wikipedia/commons/f/fe/Saturnoppositions-animated.gif",
+    "Uranus": "https://upload.wikimedia.org/wikipedia/commons/2/20/Uranus_orientation_1985-2030.gif",
+    "Neptune": "https://upload.wikimedia.org/wikipedia/commons/6/6d/Neptune.gif",
+    "Pluto": "https://upload.wikimedia.org/wikipedia/commons/f/f9/Pluto_rotation_movie.gif",
+    "Moon": "https://upload.wikimedia.org/wikipedia/commons/c/c0/Lunar_libration_with_phase2.gif",
+    "Europa": "https://upload.wikimedia.org/wikipedia/commons/2/2d/Europa-rotationmovie.gif",
+    "Titan": "https://upload.wikimedia.org/wikipedia/commons/e/e2/PIA02146.gif",
+    "Ceres": "https://upload.wikimedia.org/wikipedia/commons/7/73/PIA19179-Ceres-DawnSpacecraft-Animation16-20150204.gif",
+    "Eris": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/Artist%27s_impression_dwarf_planet_Eris.jpg/2560px-Artist%27s_impression_dwarf_planet_Eris.jpg",
+    "Haumea": "https://upload.wikimedia.org/wikipedia/commons/9/9c/Haumea_Rotation.gif",
+    "Makemake": "https://upload.wikimedia.org/wikipedia/commons/7/79/Makemake_Animation.gif",
+    "Ganymede": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR7spUKvknajRiSUvNvyVSJ98HxDLzMIJqSjw&s",
+    "Callisto": "https://upload.wikimedia.org/wikipedia/commons/e/e4/Callisto-rotationmovie.gif",
+    "Io": "https://upload.wikimedia.org/wikipedia/commons/1/14/Io-rotationmovie.gif",
+    "Triton": "https://upload.wikimedia.org/wikipedia/commons/f/f3/Triton_Rotation_Movie.gif",
+    "Enceladus": "https://cdn.mos.cms.futurecdn.net/C4hmAcPxXXHY8AZ7EpHZDJ-320-80.gif",
+    "Vesta": "https://upload.wikimedia.org/wikipedia/commons/f/ff/Vesta_Rotation.gif?20110803005326",
+    "Pallas": "https://upload.wikimedia.org/wikipedia/commons/d/d4/Potw1749a_Pallas_crop.png",
+    "Hygiea": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/88/SPHERE_image_of_Hygiea.jpg/290px-SPHERE_image_of_Hygiea.jpg"
 }
-
-# Parent body (for moons)
-moon_orbits = {
-    "Moon": "Earth", "Europa": "Jupiter", "Ganymede": "Jupiter", "Callisto": "Jupiter",
-    "Io": "Jupiter", "Triton": "Neptune", "Enceladus": "Saturn", "Titan": "Saturn"
-}
-
-# Celestial Symbols
-celestial_symbols = {
-    "Mercury": "☿", "Venus": "♀", "Earth": "⊕", "Mars": "♂",
-    "Jupiter": "♃", "Saturn": "♄", "Uranus": "♅", "Neptune": "♆",
-    "Pluto": "♇", "Moon": "☽", "Europa": "🜁", "Titan": "🜂"
-}
-
-# Random symbols for celestial bodies with no official symbol
-random_symbols = ["🦄", "🐦‍🔥", "🦖", "🐲"]
 
 # Function to get planetary data
 def get_planetary_data(body_name):
@@ -63,17 +63,9 @@ def get_planetary_data(body_name):
 
     extracted_data = {
         "Mass": (mass, "kg"),
-        "Sidereal Orbital Period": (data.get("sideralOrbit", None) * 86400 if data.get("sideralOrbit") else None, "s"),
-        "Mean Radius": (radius, "m"),
-        "Mean Solar Day": (data.get("sideralRotation", None) * 86400 if data.get("sideralRotation") else None, "s"),
-        "Distance from Sun": (data.get("semimajorAxis", None) * 1000 if data.get("semimajorAxis") else None, "m"),
         "Surface Gravity": (surface_gravity, r"\text{m/s}^2"),
         "Escape Velocity": (escape_velocity, "m/s"),
     }
-    
-    # If the object is a moon, add information about its parent planet
-    if body_name in moon_orbits:
-        extracted_data["Orbits"] = (moon_orbits[body_name], "")
 
     return extracted_data
 
@@ -98,20 +90,15 @@ st.title("Celestial Mechanics Simulator")
 selected_body = st.selectbox("Select a Celestial Body", list(horizons_bodies.keys()))
 
 if st.button("Fetch Data"):
-    category = object_categories[selected_body]
-    body_id = horizons_bodies[selected_body]
-    planetary_data = get_planetary_data(body_id)
+    planetary_data = get_planetary_data(selected_body)
 
     # Display centered and bold category title
-    st.markdown(f"<h2 style='text-align: center;'><b>Category: {category}</b></h2>", unsafe_allow_html=True)
+    st.markdown(f"<h2 style='text-align: center;'><b>{selected_body}</b></h2>", unsafe_allow_html=True)
 
     for key, (value, unit) in planetary_data.items():
         st.latex(format_value(key, value, unit))
 
-    # Display what the moon orbits
-    if selected_body in moon_orbits:
-        st.latex(rf"\textbf{{Orbits}}: \text{{{moon_orbits[selected_body]}}}")
+    # Display celestial image
+    if selected_body in celestial_images:
+        st.image(celestial_images[selected_body], caption=f"Image of {selected_body}", use_column_width=True)
 
-    # Display celestial symbol, or a random one if missing
-    symbol = celestial_symbols.get(selected_body, random.choice(random_symbols))
-    st.markdown(f"<div style='text-align: center; font-size: 140px;'>{symbol}</div>", unsafe_allow_html=True)
