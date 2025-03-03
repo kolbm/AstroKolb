@@ -71,7 +71,7 @@ def get_planetary_data(body_name):
     mass = data.get("mass", {}).get("massValue", None) * 10**data.get("mass", {}).get("massExponent", 0) if data.get("mass") else None
     radius = data.get("meanRadius", None) * 1000 if data.get("meanRadius") else None  # Convert km to meters
     
-    # Calculate Surface Gravity g = G * M / R^2
+    # Calculate Surface Gravity g = GM/R^2
     surface_gravity = (G * mass / radius**2) if (mass and radius) else None
     
     # Calculate Escape Velocity sqrt(2GM/R)
@@ -128,10 +128,10 @@ if st.button("Fetch Data"):
     for latex_string in formatted_latex:
         st.latex(latex_string)
 
-    # Display the celestial symbol, centered and enlarged
+    # Display the celestial symbol, now even larger
     symbol = celestial_symbols.get(selected_body, "N/A")
     st.markdown(
-        f"<div style='text-align: center; font-size: 80px;'>{symbol}</div>", 
+        f"<div style='text-align: center; font-size: 120px;'>{symbol}</div>", 
         unsafe_allow_html=True
     )
 
