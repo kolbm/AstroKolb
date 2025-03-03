@@ -79,12 +79,13 @@ if mode == "Solar System Objects":
         body_id = horizons_bodies[selected_body]
         planetary_data = get_planetary_data(body_id)
 
-        # Ensure no repeated "Unknown" values
+        # Ensure all values are formatted in LaTeX
         cleaned_data = {key: format_value(planetary_data.get(key)) for key in planetary_data}
 
         st.subheader("Extracted Data:")
         for key, value in cleaned_data.items():
-            st.latex(rf"{key.replace(' ', '_')} = {value}")
+            key_latex = key.replace(" ", r"\ ")
+            st.latex(rf"{key_latex} = {value}")
 
 elif mode == "Exoplanets":
     exoplanets = get_exoplanet_data()
@@ -104,9 +105,10 @@ elif mode == "Exoplanets":
                     "Eccentricity": float(planet_data.get("pl_orbeccen", 0.0)),  # Default to circular orbit
                 }
 
-                # Ensure no repeated "Unknown" values
+                # Ensure all values are formatted in LaTeX
                 cleaned_data = {key: format_value(extracted_data.get(key)) for key in extracted_data}
 
                 st.subheader("Extracted Data:")
                 for key, value in cleaned_data.items():
-                    st.latex(rf"{key.replace(' ', '_')} = {value}")
+                    key_latex = key.replace(" ", r"\ ")
+                    st.latex(rf"{key_latex} = {value}")
