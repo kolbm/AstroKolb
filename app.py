@@ -73,6 +73,9 @@ def get_planetary_data(body_name):
     
     # Calculate Surface Gravity g = G * M / R^2
     surface_gravity = (G * mass / radius**2) if (mass and radius) else None
+    
+    # Calculate Escape Velocity sqrt(2GM/R)
+    escape_velocity = np.sqrt(2 * G * mass / radius) if (mass and radius) else None
 
     extracted_data = {
         "Mass (kg)": mass,
@@ -81,6 +84,7 @@ def get_planetary_data(body_name):
         "Mean Solar Day (s)": data.get("sideralRotation", None) * 86400 if data.get("sideralRotation") else None,
         "Distance from Sun (m)": data.get("semimajorAxis", None) * 1000 if data.get("semimajorAxis") else None,
         "Surface Gravity (m/s^2)": surface_gravity,
+        "Escape Velocity (m/s)": escape_velocity
     }
 
     return extracted_data
@@ -93,6 +97,10 @@ def format_value(name, value, unit=""):
     
     exponent = int(np.floor(np.log10(abs(value)))) if value != 0 else 0
     base = value / (10**exponent)
+
+    # Remove exponent if it is 10^0
+    if exponent == 0:
+        return rf"{name} = {base:.3f} \text{{ {unit} }}"
     
     return rf"{name} = {base:.3f} \times 10^{{{exponent}}} \text{{ {unit} }}"
 
@@ -114,6 +122,7 @@ if st.button("Fetch Data"):
         format_value(r"\text{Mean Solar Day}", planetary_data.get("Mean Solar Day (s)"), "s"),
         format_value(r"\text{Distance from Sun}", planetary_data.get("Distance from Sun (m)"), "m"),
         format_value(r"\text{Surface Gravity}", planetary_data.get("Surface Gravity (m/s^2)"), "m/s^2"),
+        format_value(r"\text{Escape Velocity}", planetary_data.get("Escape Velocity (m/s)"), "m/s"),
     ]
 
     for latex_string in formatted_latex:
