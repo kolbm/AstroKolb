@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 import numpy as np
+import pyperclip
 import random
 
 # Constants
@@ -62,7 +63,7 @@ def get_planetary_data(body_name):
         "Mean Radius": (radius, "m"),
         "Mean Solar Day": (data.get("sideralRotation", None) * 86400 if data.get("sideralRotation") else None, "s"),
         "Distance from Sun": (data.get("semimajorAxis", None) * 1000 if data.get("semimajorAxis") else None, "m"),
-        "Surface Gravity": (surface_gravity, r"m/s^2"),
+        "Surface Gravity": (surface_gravity, "m/s^2"),
         "Escape Velocity": (escape_velocity, "m/s"),
     }
     
@@ -116,7 +117,9 @@ if st.button("Fetch Data"):
         # Convert value for copying (long form)
         if value is not None:
             long_form_value = format_long_form(value)
-            col2.text_input("", long_form_value, key=f"copy_{key}")
+            if col2.button(f"📋 Copy {key}", key=f"copy_{key}"):
+                pyperclip.copy(long_form_value)
+                st.success(f"Copied: {long_form_value}")
 
     # Display what the moon orbits (only if applicable)
     if orbits:
