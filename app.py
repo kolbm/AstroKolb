@@ -61,10 +61,14 @@ def get_exoplanet_data():
     return response.json()
 
 def format_value(name, value):
-    """Formats numerical values in scientific notation using LaTeX."""
+    """Formats numerical values using LaTeX scientific notation in 10^x format."""
     if value is None:
         return rf"{name} = \text{{Unknown}}"
-    return rf"{name} = {value:.3e}"
+    
+    exponent = int(np.floor(np.log10(abs(value)))) if value != 0 else 0
+    base = value / (10**exponent)
+    
+    return rf"{name} = {base:.3f} \times 10^{{{exponent}}}"
 
 # Streamlit UI
 st.title("Celestial Mechanics Simulator")
