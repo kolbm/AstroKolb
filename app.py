@@ -32,7 +32,7 @@ def get_planetary_data(body_name):
         response.raise_for_status()
     except requests.exceptions.RequestException as e:
         st.error(f"API request failed: {e}")
-        return {}, None  # Return empty data to prevent crashes
+        return {}, None  
 
     data = response.json()
     
@@ -71,13 +71,28 @@ def get_planetary_data(body_name):
 
     return extracted_data, orbits_text
 
+# Format values for LaTeX
+def format_value(name, value, unit):
+    """Formats numerical values using LaTeX scientific notation, with standard notation for -2 ≤ exponent ≤ 2."""
+    if value is None:
+        return rf"\textbf{{{name}}}: \text{{Unknown}}"
+
+    exponent = int(np.floor(np.log10(abs(value)))) if value != 0 else 0
+    base = value / (10**exponent)
+
+    # If exponent is between -2 and 2, display in standard notation
+    if -2 <= exponent <= 2:
+        return rf"\textbf{{{name}}}: {value:.3f} \quad \text{{{unit}}}"
+    
+    return rf"\textbf{{{name}}}: {base:.3f} \times 10^{{{exponent}}} \quad \text{{{unit}}}"
+
 # Streamlit UI
 st.title("Celestial Mechanics Simulator")
 
 selected_body = st.selectbox("Select a Celestial Body", list(horizons_bodies.keys()))
 
 if st.button("Fetch Data"):
-    st.write("Fetching data...")  # Prevents white screen delay
+    st.write("Fetching data...")  
     planetary_data, orbits = get_planetary_data(selected_body)
 
     # Display centered and bold category title
@@ -86,20 +101,19 @@ if st.button("Fetch Data"):
     # Display planetary data with copy buttons
     for key, (value, unit) in planetary_data.items():
         col1, col2 = st.columns([3, 1])
-        
-        # Format the value for display
-        formatted_value = "Unknown" if value is None else f"{value:.3e}" if abs(value) >= 1e3 or abs(value) < 1e-3 else f"{value:.3f}"
-        
-        # Show value and unit
-        col1.markdown(f"**{key}:** {formatted_value} {unit}")
-        
-        # Show copy button (only if value exists)
+
+        # Convert value for LaTeX formatting
+        formatted_value = format_value(key, value, unit)
+        col1.latex(formatted_value)
+
+        # Standard form for copying
         if value is not None:
-            col2.button("📋 Copy", key=f"copy_{key}", on_click=lambda val=formatted_value: st.session_state.update({"clipboard": val}))
+            standard_value = f"{value:.3e}" if abs(value) >= 1e3 or abs(value) < 1e-3 else f"{value:.3f}"
+            col2.text_input("", standard_value, key=f"copy_{key}")
 
     # Display what the moon orbits (only if applicable)
     if orbits:
-        st.markdown(f"**Orbits:** {orbits}")
+        st.latex(rf"\textbf{{Orbits}}: \text{{{orbits}}}")
 
     # Display celestial image (if available)
     celestial_images = {
