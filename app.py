@@ -67,10 +67,11 @@ def get_planetary_data(body_name):
     }
     
     # If the object is a moon, add information about its parent planet
+    orbits_text = None
     if body_name in moon_orbits:
-        extracted_data["Orbits"] = (moon_orbits[body_name], "")
+        orbits_text = moon_orbits[body_name]
 
-    return extracted_data
+    return extracted_data, orbits_text
 
 # Format values for LaTeX
 def format_value(name, value, unit):
@@ -96,7 +97,7 @@ st.title("Celestial Mechanics Simulator")
 selected_body = st.selectbox("Select a Celestial Body", list(horizons_bodies.keys()))
 
 if st.button("Fetch Data"):
-    planetary_data = get_planetary_data(selected_body)
+    planetary_data, orbits = get_planetary_data(selected_body)
 
     # Display centered and bold category title
     st.markdown(f"<h2 style='text-align: center;'><b>{selected_body}</b></h2>", unsafe_allow_html=True)
@@ -109,9 +110,9 @@ if st.button("Fetch Data"):
     for key, (value, unit) in planetary_data.items():
         st.latex(format_value(key, value, unit))
 
-    # Display what the moon orbits
-    if selected_body in moon_orbits:
-        st.latex(rf"\textbf{{Orbits}}: \text{{{moon_orbits[selected_body]}}}")
+    # Display what the moon orbits (only if applicable)
+    if orbits:
+        st.latex(rf"\textbf{{Orbits}}: \text{{{orbits}}}")
 
     # Display celestial image
     celestial_images = {
